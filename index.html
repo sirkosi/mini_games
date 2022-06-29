@@ -4,7 +4,7 @@
       const colors = ['red', 'green', 'blue', 'dodgerblue', 'beige']
       const sizes = [20, 30, 40, 50, 60]
 
-      window.addEventListener("click", function(e) {
+      window.addEventListener("click touchstart", function(e) {
         var box = document.getElementById('elGroup')
         var el = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         el.setAttribute('cx', e.clientX)
