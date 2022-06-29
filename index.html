@@ -1,0 +1,30 @@
+<html>
+  <head>
+    <script type="text/javascript">
+      const colors = ['red', 'green', 'blue', 'dodgerblue', 'beige']
+      const sizes = [20, 30, 40, 50, 60]
+
+      window.addEventListener("click", function(e) {
+        var box = document.getElementById('elGroup')
+        var el = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        el.setAttribute('cx', e.clientX)
+        el.setAttribute('cy', e.clientY)
+        el.setAttribute('r', sizes[Math.floor(Math.random() * sizes.length)])
+        el.setAttribute('fill', colors[Math.floor(Math.random() * colors.length)])
+        box.appendChild(el)
+      });
+    </script>
+    <style>
+      body { margin: 0; }
+      svg {
+        width: 100vw;
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <svg id="svgbox" xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewPort='0 0 1000 1000'>
+      <g id="elGroup"></g>
+    </svg>
+  </body>
+</html>
