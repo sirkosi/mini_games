@@ -4,15 +4,20 @@
       const colors = ['red', 'green', 'blue', 'dodgerblue', 'beige']
       const sizes = [20, 30, 40, 50, 60]
 
-      window.addEventListener("click touchstart", function(e) {
+      var paintCircle = function(x, y) {
         var box = document.getElementById('elGroup')
-        var el = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        el.setAttribute('cx', e.clientX)
-        el.setAttribute('cy', e.clientY)
+        var el = document.createElementNS("http://www.w3.org/2000/svg", "circle")
+
+        el.setAttribute('cx', x)
+        el.setAttribute('cy', y)
         el.setAttribute('r', sizes[Math.floor(Math.random() * sizes.length)])
         el.setAttribute('fill', colors[Math.floor(Math.random() * colors.length)])
+
         box.appendChild(el)
-      });
+      }
+
+      window.addEventListener("click", function(e) { paintCircle(e.clientX, e.clientY) })
+      window.addEventListener("touchend", function(e) { paintCircle(e.changedTouches[0].clientX, e.changedTouches[0].clientY) })
     </script>
     <style>
       body { margin: 0; }
