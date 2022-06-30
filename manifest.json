@@ -1,7 +1,7 @@
 {
  "lang": "de",
  "name": "Painting",
- "short_name": "Pain",
+ "short_name": "Paint",
  "display": "standalone",
  "start_url": "/paint_tools/",
  "theme_color": "#ffffff",
