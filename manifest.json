@@ -1,0 +1,11 @@
+{
+ "lang": "de",
+ "name": "Painting",
+ "short_name": "Pain",
+ "display": "standalone",
+ "start_url": "/",
+ "theme_color": "#ffffff",
+ "background_color": "#ffffff",
+ "display": "fullscreen",
+ "icons": []
+}
