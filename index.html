@@ -42,7 +42,7 @@
         window.addEventListener("click", function(e) { paint(e.clientX, e.clientY) })
         window.addEventListener("touchend", function(e) { paint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) })
         window.addEventListener("touchmove", function(e) { paint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) })
-        window.addEventListener("mousemove", function(e) { if (mouseDown) paint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) })
+        window.addEventListener("mousemove", function(e) { if (mouseDown) paint(e.clientX, e.clientY) })
         window.addEventListener('resize', function(event) { svgEl.setAttribute('height', window.innerHeight) }, true);
       });
     </script>
