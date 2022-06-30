@@ -13,31 +13,32 @@
 
     <script type="text/javascript" defer>
       document.addEventListener("DOMContentLoaded", function(){
-        const colors = ['red'] // ['red', 'green', 'blue', 'dodgerblue', 'beige']
-        const sizes = [20, 30, 40, 50, 60]
+        var mouseDown = 0;
+        document.body.onmousedown = function() { ++mouseDown; }
+        document.body.onmouseup = function() { --mouseDown; }
+
+        const colors = ['red', 'green', 'blue', 'dodgerblue', 'beige']
+        var randColor = colors[Math.floor(Math.random() * colors.length)]
         var svgEl = document.getElementById('svgbox')
 
-        var paintCircle = function(x, y) {
-
+        var paint = function(x, y) {
           var box = document.getElementById('elGroup')
-          var el = document.createElementNS("http://www.w3.org/2000/svg", "circle")
-
-          el.setAttribute('cx', x)
-          el.setAttribute('cy', y)
-          el.setAttribute('r', sizes[Math.floor(Math.random() * sizes.length)])
-          el.setAttribute('fill', colors[Math.floor(Math.random() * colors.length)])
-
-          box.appendChild(el)
+          var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle")
+          circle.setAttribute('cx', x)
+          circle.setAttribute('cy', y)
+          circle.setAttribute('r', 20)
+          circle.setAttribute('fill', randColor)
+          box.appendChild(circle)
         }
 
-        window.addEventListener("click", function(e) { paintCircle(e.clientX, e.clientY) })
-        window.addEventListener("touchend", function(e) { paintCircle(e.changedTouches[0].clientX, e.changedTouches[0].clientY) })
+        window.addEventListener("click", function(e) { paint(e.clientX, e.clientY) })
+        window.addEventListener("touchend", function(e) { paint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) })
+        window.addEventListener("touchmove", function(e) { paint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) })
+        window.addEventListener("mousemove", function(e) { if (mouseDown) paint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) })
 
         svgEl.setAttribute('height', window.innerHeight)
 
-        window.addEventListener('resize', function(event) {
-          svgEl.setAttribute('height', window.innerHeight)
-        }, true);
+        window.addEventListener('resize', function(event) { svgEl.setAttribute('height', window.innerHeight) }, true);
       });
     </script>
 
@@ -48,8 +49,14 @@
     </script>
 
     <style>
-      body { margin: 0; }
-      html, body { overscroll-behavior-y: contain; }
+      body {
+        margin: 0;
+        width: 100%;
+      }
+      html, body {
+        position: fixed;
+        overflow: hidden;
+      }
       svg { width: 100%; }
     </style>
   </head>
