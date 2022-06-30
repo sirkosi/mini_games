@@ -18,26 +18,31 @@
         document.body.onmouseup = function() { --mouseDown; }
 
         const colors = ['red', 'green', 'blue', 'dodgerblue', 'beige']
-        var randColor = colors[Math.floor(Math.random() * colors.length)]
+        var color = colors[Math.floor(Math.random() * colors.length)]
+        var size = 20
         var svgEl = document.getElementById('svgbox')
+        svgEl.setAttribute('height', window.innerHeight)
 
         var paint = function(x, y) {
           var box = document.getElementById('elGroup')
           var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle")
           circle.setAttribute('cx', x)
           circle.setAttribute('cy', y)
-          circle.setAttribute('r', 20)
-          circle.setAttribute('fill', randColor)
+          circle.setAttribute('r', size)
+          circle.setAttribute('fill', color)
           box.appendChild(circle)
         }
+
+        var setColor = function () { color = document.getElementById("colorPicker").value; }
+        var setSize = function () { size = document.getElementById("sizeSlider").value; }
+
+        document.getElementById("colorPicker").addEventListener("change", function() { setColor() });
+        document.getElementById("sizeSlider").addEventListener("change", function() { setSize() });
 
         window.addEventListener("click", function(e) { paint(e.clientX, e.clientY) })
         window.addEventListener("touchend", function(e) { paint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) })
         window.addEventListener("touchmove", function(e) { paint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) })
         window.addEventListener("mousemove", function(e) { if (mouseDown) paint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) })
-
-        svgEl.setAttribute('height', window.innerHeight)
-
         window.addEventListener('resize', function(event) { svgEl.setAttribute('height', window.innerHeight) }, true);
       });
     </script>
@@ -57,10 +62,36 @@
         position: fixed;
         overflow: hidden;
       }
-      svg { width: 100%; }
+      svg {
+        width: 100%;
+      }
+      .controls {
+        position: absolute;
+        top: 10;
+        left: 10;
+      }
+      #colorPicker {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 50px;
+        height: 50px;
+      }
+      #sizeSlider {
+        position: absolute;
+        top: 150;
+        left: -75;
+        width: 200px;
+        height: 50px;
+        -webkit-transform: rotate(90deg);
+      }
     </style>
   </head>
   <body>
+    <div class="controls">
+      <input type="color" id="colorPicker" name="colorPicker" value="#ff0000">
+      <input type="range" id="sizeSlider" min="1" max="100" value="20" class="slider">
+    </div>
     <svg id="svgbox" xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewPort='0 0 1000 1000'>
       <g id="elGroup"></g>
     </svg>
