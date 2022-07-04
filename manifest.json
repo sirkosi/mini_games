@@ -1,7 +1,7 @@
 {
  "lang": "de",
- "name": "Painting",
- "short_name": "Paint",
+ "name": "Mini Games",
+ "short_name": "MiniG",
  "display": "standalone",
  "start_url": "/paint_tools/",
  "theme_color": "#ffffff",
