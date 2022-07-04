@@ -59,5 +59,6 @@ layout: default
 
   addApples()
   moveWorm(400,400)
+  window.addEventListener("touchend", function(e) { moveWorm(e.changedTouches[0].clientX, e.changedTouches[0].clientY) })
   window.addEventListener("click", function(e) { moveWorm(e.clientX, e.clientY) })
 </script>
