@@ -1,0 +1,63 @@
+---
+layout: default
+---
+<svg id="wormbox" xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewPort='0 0 1000 1000'>
+  <g><circle id="worm" cx="0" cy="0" r="40" fill="green"></circle></g>
+  <g id="appleBox"></g>
+</svg>
+
+<script type="text/javascript">
+  var wormSize = 40;
+  var appleSize = 30;
+  var apples = 5;
+
+  var svgEl = document.getElementById('wormbox')
+
+  var addApples = function() {
+    if (document.querySelectorAll("g#appleBox circle").length > 3) return;
+
+    for (i = 0; i < apples; i++) {
+      drawApple()
+    }
+  }
+
+  var moveWorm = function(x, y) {
+    var worm = document.getElementById('worm')
+    worm.setAttribute("transform", "translate(" + x + "," + y + ")");
+
+    // check apple collision
+    var appleElements = document.querySelectorAll("g#appleBox circle")
+
+    appleElements.forEach(function(apple) {
+      var aX = parseInt(apple.getAttribute('cx'))
+      var aY = parseInt(apple.getAttribute('cy'))
+      var wormRadius = parseInt(worm.getAttribute("r"))
+
+      // collision check (length of radius distances)
+      if (Math.sqrt(Math.pow((aX - x), 2) + Math.pow((aY - y), 2)) <= wormRadius) {
+        worm.setAttribute("r", wormRadius + 5); // increase worm
+        apple.remove() // remove apple
+      }
+    });
+
+    if (document.querySelectorAll("g#appleBox circle").length < 3) {
+      setTimeout(function() { addApples() }, 4000)
+    }
+  }
+
+  var drawApple = function() {
+    var box = document.getElementById('appleBox')
+    var apple = document.createElementNS("http://www.w3.org/2000/svg", "circle")
+    apple.setAttribute('cx', Math.floor(Math.random() * window.innerWidth))
+    apple.setAttribute('cy', Math.floor(Math.random() * window.innerHeight))
+    apple.setAttribute('r', appleSize)
+    apple.setAttribute('fill', 'red')
+    box.appendChild(apple)
+  }
+
+  svgEl.setAttribute('height', window.innerHeight)
+
+  addApples()
+  moveWorm(400,400)
+  window.addEventListener("click", function(e) { moveWorm(e.clientX, e.clientY) })
+</script>
