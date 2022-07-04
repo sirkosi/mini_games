@@ -3,7 +3,9 @@ const CACHE_NAME = 'painting-tools-v1';
 
 // list of requests whose responses will be pre-cached at install
 const INITIAL_CACHED_RESOURCES = [
-    '/'
+    '/',
+    '/paint.html',
+    '/worm.html'
 ];
 
 // install event handler (note async operation)
