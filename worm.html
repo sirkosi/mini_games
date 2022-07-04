@@ -23,7 +23,8 @@ layout: default
 
   var moveWorm = function(x, y) {
     var worm = document.getElementById('worm')
-    worm.setAttribute("transform", "translate(" + x + "," + y + ")");
+    worm.style.transform = 'translateY('+(y-25)+'px)';
+    worm.style.transform += 'translateX('+(x-25)+'px)';
 
     // check apple collision
     var appleElements = document.querySelectorAll("g#appleBox circle")
@@ -36,7 +37,7 @@ layout: default
       // collision check (length of radius distances)
       if (Math.sqrt(Math.pow((aX - x), 2) + Math.pow((aY - y), 2)) <= wormRadius) {
         worm.setAttribute("r", wormRadius + 5); // increase worm
-        apple.remove() // remove apple
+        setTimeout(function() { apple.remove() }, 750) // remove apple
       }
     });
 
@@ -59,6 +60,6 @@ layout: default
 
   addApples()
   moveWorm(400,400)
-  window.addEventListener("touchend", function(e) { moveWorm(e.changedTouches[0].clientX, e.changedTouches[0].clientY) })
-  window.addEventListener("click", function(e) { moveWorm(e.clientX, e.clientY) })
+  window.addEventListener("touchend", function(e) { moveWorm(e.changedTouches[0].clientX, e.changedTouches[0].clientY) }, false)
+  window.addEventListener("click", function(e) { moveWorm(e.clientX, e.clientY) }, false)
 </script>
