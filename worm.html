@@ -10,43 +10,52 @@ layout: default
     user-select: none;
     -webkit-user-select: none;
   }
-  
+
   #wormbox {
     width: 100vw;
     height: 100vh;
     cursor: none;
   }
-  
+
   .worm-segment {
     transition: all 0.3s ease-out;
   }
-  
+
   .score-display {
     position: fixed;
-    top: 20px;
-    left: 20px;
+    top: 10px;
+    left: 10px;
     background: rgba(255, 255, 255, 0.9);
-    padding: 15px 25px;
-    border-radius: 15px;
-    font-size: 24px;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 28px;
     font-weight: bold;
     color: #333;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     z-index: 1000;
   }
-  
+
+  .obstacle {
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.8; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+
   @media (max-width: 768px) {
     .score-display {
-      font-size: 20px;
-      padding: 12px 20px;
-      top: 10px;
-      left: 10px;
+      font-size: 24px;
+      padding: 8px 16px;
+      top: 8px;
+      left: 8px;
     }
   }
 </style>
 
 <div class="score-display">
-  🐛 Length: <span id="scoreValue">1</span>
+  🐛 <span id="scoreValue">1</span>
 </div>
 
 <svg id="wormbox" xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewPort='0 0 1000 1000'>
@@ -63,8 +72,24 @@ layout: default
       <!-- Highlight -->
       <ellipse cx="-6" cy="-8" rx="8" ry="10" fill="#FF8A80" opacity="0.5"/>
     </g>
+
+    <!-- Poison/Obstacle icon definition -->
+    <g id="poisonIcon">
+      <!-- Ice cream/popsicle shape (kid-friendly) -->
+      <ellipse cx="0" cy="-8" rx="16" ry="20" fill="#FF69B4"/>
+      <rect x="-6" y="8" width="12" height="20" fill="#FFE4C4" rx="2"/>
+      <!-- Face -->
+      <circle cx="-5" cy="-10" r="2" fill="#333"/>
+      <circle cx="5" cy="-10" r="2" fill="#333"/>
+      <path d="M -6 -2 Q 0 2 6 -2" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <!-- Sparkles -->
+      <path d="M -18 -8 L -16 -8 M -17 -9 L -17 -7" stroke="#FFD700" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M 18 -8 L 16 -8 M 17 -9 L 17 -7" stroke="#FFD700" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M 0 -28 L 0 -26 M -1 -27 L 1 -27" stroke="#FFD700" stroke-width="1.5" stroke-linecap="round"/>
+    </g>
   </defs>
-  
+
+  <g id="obstacleBox"></g>
   <g id="appleBox"></g>
   <g id="wormG"></g>
 </svg>
@@ -72,51 +97,69 @@ layout: default
 <script type="text/javascript">
   var wormSegmentSize = 25;
   var appleSize = 20;
+  var obstacleSize = 20;
   var svgEl = document.getElementById('wormbox');
   var wormSegments = [];
   var wormPositions = [{x: 400, y: 400}];
   var targetX = 400;
   var targetY = 400;
   var score = 0;
-
-  var wormSegmentSize = 25;
-  var appleSize = 20;
-  var svgEl = document.getElementById('wormbox');
-  var wormSegments = [];
-  var wormPositions = [{x: 400, y: 400}];
-  var targetX = 400;
-  var targetY = 400;
-  var score = 0;
+  var obstacles = [];
+  var obstacleLifetime = 4000; // 4 seconds (was 5)
 
   // Initialize worm with head
   function initWorm() {
     var wormG = document.getElementById('wormG');
+
+    // Create head group to keep eyes attached
+    var headGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    headGroup.setAttribute('id', 'head-group');
+
     var head = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    head.setAttribute('cx', wormPositions[0].x);
-    head.setAttribute('cy', wormPositions[0].y);
+    head.setAttribute('cx', 0);
+    head.setAttribute('cy', 0);
     head.setAttribute('r', wormSegmentSize);
     head.setAttribute('fill', '#EA348B');
     head.setAttribute('class', 'worm-segment');
     head.setAttribute('id', 'worm-head');
-    
-    // Add eyes to head
+
+    // Add eyes to head (relative to head center)
     var leftEye = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    leftEye.setAttribute('cx', wormPositions[0].x - 8);
-    leftEye.setAttribute('cy', wormPositions[0].y - 5);
+    leftEye.setAttribute('cx', -8);
+    leftEye.setAttribute('cy', -5);
     leftEye.setAttribute('r', 4);
     leftEye.setAttribute('fill', 'white');
     leftEye.setAttribute('id', 'left-eye');
-    
+
+    var leftPupil = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    leftPupil.setAttribute('cx', -8);
+    leftPupil.setAttribute('cy', -5);
+    leftPupil.setAttribute('r', 2);
+    leftPupil.setAttribute('fill', '#333');
+
     var rightEye = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    rightEye.setAttribute('cx', wormPositions[0].x + 8);
-    rightEye.setAttribute('cy', wormPositions[0].y - 5);
+    rightEye.setAttribute('cx', 8);
+    rightEye.setAttribute('cy', -5);
     rightEye.setAttribute('r', 4);
     rightEye.setAttribute('fill', 'white');
     rightEye.setAttribute('id', 'right-eye');
-    
-    wormG.appendChild(head);
-    wormG.appendChild(leftEye);
-    wormG.appendChild(rightEye);
+
+    var rightPupil = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    rightPupil.setAttribute('cx', 8);
+    rightPupil.setAttribute('cy', -5);
+    rightPupil.setAttribute('r', 2);
+    rightPupil.setAttribute('fill', '#333');
+
+    headGroup.appendChild(head);
+    headGroup.appendChild(leftEye);
+    headGroup.appendChild(leftPupil);
+    headGroup.appendChild(rightEye);
+    headGroup.appendChild(rightPupil);
+
+    // Position the head group
+    headGroup.setAttribute('transform', 'translate(' + wormPositions[0].x + ',' + wormPositions[0].y + ')');
+
+    wormG.appendChild(headGroup);
     wormSegments.push(head);
   }
 
@@ -131,29 +174,78 @@ layout: default
     segment.setAttribute('r', wormSegmentSize);
     segment.setAttribute('fill', colors[wormPositions.length % colors.length]);
     segment.setAttribute('class', 'worm-segment');
-    
+
     wormG.insertBefore(segment, wormG.firstChild);
     wormSegments.push(segment);
     wormPositions.push({x: lastPos.x, y: lastPos.y});
-    
+
     score++;
     document.getElementById('scoreValue').textContent = wormPositions.length;
   }
 
-  // Check apple collision
+  // Remove segment from worm
+  function removeWormSegment() {
+    if (wormPositions.length > 1) {
+      var segment = wormSegments.pop();
+      if (segment && segment.parentNode) {
+        segment.parentNode.removeChild(segment);
+      }
+      wormPositions.pop();
+      score = Math.max(0, score - 1);
+      document.getElementById('scoreValue').textContent = wormPositions.length;
+    }
+  }
+
+  // Check apple collision - only with head
   var checkAppleCollision = function() {
     var head = wormPositions[0];
+    var applesEaten = [];
+
     document.querySelectorAll("g#appleBox use").forEach(function(apple) {
       var aX = parseFloat(apple.getAttribute('x'));
       var aY = parseFloat(apple.getAttribute('y'));
-      
-      // Collision check - distance between centers
+
+      // Collision check - distance between head center and apple center
       var distance = Math.sqrt(Math.pow((aX - head.x), 2) + Math.pow((aY - head.y), 2));
-      if (distance <= wormSegmentSize + appleSize) {
-        addWormSegment();
-        apple.remove();
-        drawApple();
+
+      // Check if head reaches the apple
+      if (distance <= wormSegmentSize + 10) {
+        applesEaten.push(apple);
       }
+    });
+
+    // Remove eaten apples and grow worm
+    applesEaten.forEach(function(apple) {
+      addWormSegment();
+      apple.remove();
+      drawApple();
+    });
+  }
+
+  // Check obstacle collision - only with head
+  var checkObstacleCollision = function() {
+    var head = wormPositions[0];
+    var obstaclesHit = [];
+
+    obstacles.forEach(function(obstacleData) {
+      var obstacle = obstacleData.element;
+      var oX = parseFloat(obstacle.getAttribute('x'));
+      var oY = parseFloat(obstacle.getAttribute('y'));
+
+      // Collision check - distance between head center and obstacle center
+      var distance = Math.sqrt(Math.pow((oX - head.x), 2) + Math.pow((oY - head.y), 2));
+
+      // Check if head reaches the obstacle
+      if (distance <= wormSegmentSize + 10) {
+        obstaclesHit.push(obstacleData);
+      }
+    });
+
+    // Remove hit obstacles and shrink worm
+    obstaclesHit.forEach(function(obstacleData) {
+      removeWormSegment();
+      obstacleData.element.remove();
+      obstacles = obstacles.filter(function(o) { return o !== obstacleData; });
     });
   }
 
@@ -166,54 +258,55 @@ layout: default
   // Animation loop
   function animate() {
     var head = wormPositions[0];
-    
+
     // Smooth movement towards target
     var dx = targetX - head.x;
     var dy = targetY - head.y;
     var distance = Math.sqrt(dx * dx + dy * dy);
-    
+
     if (distance > 2) {
       var speed = Math.min(5, distance * 0.1);
       var vx = (dx / distance) * speed;
       var vy = (dy / distance) * speed;
-      
+
       // Update head position
       wormPositions[0] = {x: head.x + vx, y: head.y + vy};
-      
-      // Update body segments - follow the leader
-      for (var i = 1; i < wormPositions.length; i++) {
-        var prevPos = wormPositions[i - 1];
-        var currPos = wormPositions[i];
-        var segDx = prevPos.x - currPos.x;
-        var segDy = prevPos.y - currPos.y;
-        var segDist = Math.sqrt(segDx * segDx + segDy * segDy);
-        
-        if (segDist > wormSegmentSize * 1.5) {
-          var segVx = (segDx / segDist) * (segDist - wormSegmentSize * 1.5) * 0.3;
-          var segVy = (segDy / segDist) * (segDist - wormSegmentSize * 1.5) * 0.3;
-          wormPositions[i] = {x: currPos.x + segVx, y: currPos.y + segVy};
-        }
-      }
-      
-      // Update DOM elements
-      for (var i = 0; i < wormSegments.length; i++) {
-        wormSegments[i].setAttribute('cx', wormPositions[i].x);
-        wormSegments[i].setAttribute('cy', wormPositions[i].y);
-      }
-      
-      // Update eyes
-      var leftEye = document.getElementById('left-eye');
-      var rightEye = document.getElementById('right-eye');
-      if (leftEye && rightEye) {
-        leftEye.setAttribute('cx', wormPositions[0].x - 8);
-        leftEye.setAttribute('cy', wormPositions[0].y - 5);
-        rightEye.setAttribute('cx', wormPositions[0].x + 8);
-        rightEye.setAttribute('cy', wormPositions[0].y - 5);
-      }
-      
-      checkAppleCollision();
     }
-    
+
+    // Update body segments - follow the leader with fixed distance
+    var segmentDistance = wormSegmentSize * 1.8; // Fixed distance between segments
+
+    for (var i = 1; i < wormPositions.length; i++) {
+      var prevPos = wormPositions[i - 1];
+      var currPos = wormPositions[i];
+      var segDx = prevPos.x - currPos.x;
+      var segDy = prevPos.y - currPos.y;
+      var segDist = Math.sqrt(segDx * segDx + segDy * segDy);
+
+      // Keep segments at a fixed distance from the previous segment
+      if (segDist > 0) {
+        var ratio = segmentDistance / segDist;
+        wormPositions[i] = {
+          x: prevPos.x - segDx * ratio,
+          y: prevPos.y - segDy * ratio
+        };
+      }
+    }
+
+    // Update DOM elements
+    var headGroup = document.getElementById('head-group');
+    if (headGroup) {
+      headGroup.setAttribute('transform', 'translate(' + wormPositions[0].x + ',' + wormPositions[0].y + ')');
+    }
+
+    for (var i = 1; i < wormSegments.length; i++) {
+      wormSegments[i].setAttribute('cx', wormPositions[i].x);
+      wormSegments[i].setAttribute('cy', wormPositions[i].y);
+    }
+
+    checkAppleCollision();
+    checkObstacleCollision();
+
     requestAnimationFrame(animate);
   }
 
@@ -226,39 +319,78 @@ layout: default
     box.appendChild(apple);
   }
 
+  var drawObstacle = function() {
+    var box = document.getElementById('obstacleBox');
+    var obstacle = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    obstacle.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#poisonIcon');
+    obstacle.setAttribute('x', Math.floor(Math.random() * (window.innerWidth - 80)) + 40);
+    obstacle.setAttribute('y', Math.floor(Math.random() * (window.innerHeight - 80)) + 40);
+    obstacle.setAttribute('class', 'obstacle');
+    box.appendChild(obstacle);
+
+    var obstacleData = {
+      element: obstacle,
+      timestamp: Date.now()
+    };
+    obstacles.push(obstacleData);
+
+    // Remove obstacle after lifetime
+    setTimeout(function() {
+      if (obstacle.parentNode) {
+        obstacle.remove();
+      }
+      obstacles = obstacles.filter(function(o) { return o !== obstacleData; });
+    }, obstacleLifetime);
+  }
+
+  // Spawn obstacles periodically
+  function spawnObstacles() {
+    // Only spawn obstacles if worm is long enough
+    if (wormPositions.length > 2) {
+      drawObstacle();
+    }
+
+    // Spawn next obstacle after random interval (2-5 seconds, more frequent)
+    var nextSpawnTime = Math.random() * 3000 + 2000;
+    setTimeout(spawnObstacles, nextSpawnTime);
+  }
+
   // Initialize
   svgEl.setAttribute('width', window.innerWidth);
   svgEl.setAttribute('height', window.innerHeight);
-  
+
   initWorm();
-  
-  // Draw initial apples
-  for (var i = 0; i < 8; i++) {
+
+  // Draw initial apples (reduced from 8 to 5)
+  for (var i = 0; i < 5; i++) {
     drawApple();
   }
 
   // Start animation loop
   animate();
 
+  // Start spawning obstacles after 3 seconds (was 5)
+  setTimeout(spawnObstacles, 3000);
+
   // Event listeners
-  window.addEventListener("touchstart", function(e) { 
+  window.addEventListener("touchstart", function(e) {
     e.preventDefault();
     moveWorm(e.touches[0].clientX, e.touches[0].clientY);
   }, { passive: false });
-  
-  window.addEventListener("touchmove", function(e) { 
+
+  window.addEventListener("touchmove", function(e) {
     e.preventDefault();
     moveWorm(e.touches[0].clientX, e.touches[0].clientY);
   }, { passive: false });
-  
-  window.addEventListener("click", function(e) { 
+
+  window.addEventListener("click", function(e) {
     moveWorm(e.clientX, e.clientY);
   });
-  
-  window.addEventListener("mousemove", function(e) { 
+
+  window.addEventListener("mousemove", function(e) {
     moveWorm(e.clientX, e.clientY);
   });
-  
+
   window.addEventListener('resize', function() {
     svgEl.setAttribute('width', window.innerWidth);
     svgEl.setAttribute('height', window.innerHeight);
