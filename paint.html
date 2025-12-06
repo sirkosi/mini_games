@@ -1,47 +1,401 @@
 ---
 layout: default
 ---
-<div class="controls">
-  <input type="color" id="colorPicker" name="colorPicker" value="#ff0000">
-  <input type="range" id="sizeSlider" min="1" max="100" value="20" class="slider">
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  #svgbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .toolbar {
+    position: fixed;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 8px 12px;
+    border-radius: 25px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: center;
+    max-width: 95vw;
+    overflow-x: auto;
+    overflow-y: hidden;
+    z-index: 1000;
+  }
+
+  .color-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+
+  .color-btn:active, .color-btn.active {
+    transform: scale(1.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    border-color: #333;
+  }
+
+  .tool-btn {
+    background: #fff;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    padding: 6px 10px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    white-space: nowrap;
+  }
+
+  .tool-btn:active {
+    transform: scale(0.95);
+    background: #f0f0f0;
+  }
+
+  .tool-btn.active {
+    background: #4CAF50;
+    color: white;
+    border-color: #45a049;
+  }
+
+  .size-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: white;
+    padding: 4px 10px;
+    border-radius: 10px;
+    border: 2px solid #ddd;
+  }
+
+  #sizeSlider {
+    width: 70px;
+    height: 6px;
+    cursor: pointer;
+  }
+
+  .brush-preview {
+    display: inline-block;
+    border-radius: 50%;
+    border: 2px solid #333;
+    transition: all 0.2s;
+  }
+
+  .separator {
+    width: 1px;
+    height: 28px;
+    background: #ddd;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 768px) {
+    .toolbar {
+      top: 3px;
+      padding: 6px 10px;
+      gap: 5px;
+    }
+    .color-btn {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+    }
+    .tool-btn {
+      padding: 5px 8px;
+      font-size: 12px;
+    }
+    #sizeSlider {
+      width: 60px;
+    }
+  }
+</style>
+
+<div class="toolbar">
+  <div class="color-btn active" data-color="#FF6B6B" style="background-color: #FF6B6B;" title="Red"></div>
+  <div class="color-btn" data-color="#4ECDC4" style="background-color: #4ECDC4;" title="Cyan"></div>
+  <div class="color-btn" data-color="#45B7D1" style="background-color: #45B7D1;" title="Blue"></div>
+  <div class="color-btn" data-color="#FFA07A" style="background-color: #FFA07A;" title="Orange"></div>
+  <div class="color-btn" data-color="#98D8C8" style="background-color: #98D8C8;" title="Mint"></div>
+  <div class="color-btn" data-color="#F7DC6F" style="background-color: #F7DC6F;" title="Yellow"></div>
+  <div class="color-btn" data-color="#BB8FCE" style="background-color: #BB8FCE;" title="Purple"></div>
+  <div class="color-btn" data-color="#F1948A" style="background-color: #F1948A;" title="Pink"></div>
+  <div class="color-btn" data-color="#85C1E2" style="background-color: #85C1E2;" title="Sky"></div>
+  <div class="color-btn" data-color="#52BE80" style="background-color: #52BE80;" title="Green"></div>
+
+  <div class="separator"></div>
+
+  <div class="size-control">
+    <span style="font-size: 12px;">🖌️</span>
+    <input type="range" id="sizeSlider" min="5" max="80" value="25">
+    <div class="brush-preview" id="brushPreview"></div>
+  </div>
+
+  <div class="separator"></div>
+
+  <button class="tool-btn active" id="brushBtn" title="Round Brush">⚫</button>
+  <button class="tool-btn" id="starBtn" title="Star Stamp">⭐</button>
+  <button class="tool-btn" id="heartBtn" title="Heart Stamp">❤️</button>
+
+  <div class="separator"></div>
+
+  <button class="tool-btn" id="clearBtn" title="Clear Canvas">🗑️</button>
 </div>
-<svg id="svgbox" xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewPort='0 0 1000 1000'>
+
+<svg id="svgbox" xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'>
+  <rect id="background" width="100%" height="100%" fill="#FFFFFF"/>
   <g id="elGroup"></g>
 </svg>
 
 <script type="text/javascript" defer>
   document.addEventListener("DOMContentLoaded", function(){
     var mouseDown = 0;
-    document.body.onmousedown = function() { ++mouseDown; }
-    document.body.onmouseup = function() { --mouseDown; }
+    var color = '#FF6B6B';
+    var size = 25;
+    var tool = 'brush'; // 'brush', 'star', 'heart'
+    var lastX = null;
+    var lastY = null;
 
-    const colors = ['red', 'green', 'blue', 'dodgerblue', 'beige']
-    var color = colors[Math.floor(Math.random() * colors.length)]
-    var size = 20
-    var svgEl = document.getElementById('svgbox')
-    svgEl.setAttribute('height', window.innerHeight)
+    var svgEl = document.getElementById('svgbox');
+    var brushPreview = document.getElementById('brushPreview');
 
-    var paint = function(x, y) {
-      var box = document.getElementById('elGroup')
-      var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle")
-      circle.setAttribute('cx', x)
-      circle.setAttribute('cy', y)
-      circle.setAttribute('r', size)
-      circle.setAttribute('fill', color)
-      box.appendChild(circle)
+    // Set SVG size
+    function resizeSVG() {
+      svgEl.setAttribute('width', window.innerWidth);
+      svgEl.setAttribute('height', window.innerHeight);
+    }
+    resizeSVG();
+
+    // Update brush preview
+    function updateBrushPreview() {
+      brushPreview.style.width = Math.max(10, Math.min(40, size)) + 'px';
+      brushPreview.style.height = Math.max(10, Math.min(40, size)) + 'px';
+      brushPreview.style.backgroundColor = color;
+    }
+    updateBrushPreview();
+
+    // Mouse state tracking
+    document.body.onmousedown = function() { mouseDown = 1; }
+    document.body.onmouseup = function() { mouseDown = 0; lastX = null; lastY = null; }
+
+    // Paint functions
+    function paintCircle(x, y) {
+      var box = document.getElementById('elGroup');
+      var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute('cx', x);
+      circle.setAttribute('cy', y);
+      circle.setAttribute('r', size / 2);
+      circle.setAttribute('fill', color);
+      circle.setAttribute('opacity', '0.9');
+      box.appendChild(circle);
     }
 
-    var setColor = function () { color = document.getElementById("colorPicker").value; }
-    var setSize = function () { size = document.getElementById("sizeSlider").value; }
+    function paintStar(x, y) {
+      var box = document.getElementById('elGroup');
+      var star = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      var points = 5;
+      var outerRadius = size;
+      var innerRadius = size / 2.5;
+      var angle = Math.PI / points;
+      var path = '';
 
-    document.getElementById("colorPicker").addEventListener("change", function() { setColor() });
-    document.getElementById("sizeSlider").addEventListener("change", function() { setSize() });
+      for (var i = 0; i < 2 * points; i++) {
+        var radius = i % 2 === 0 ? outerRadius : innerRadius;
+        var currAngle = i * angle - Math.PI / 2;
+        var px = x + radius * Math.cos(currAngle);
+        var py = y + radius * Math.sin(currAngle);
+        path += (i === 0 ? 'M' : 'L') + px + ',' + py;
+      }
+      path += 'Z';
 
-    window.addEventListener("click", function(e) { paint(e.clientX, e.clientY) })
-    window.addEventListener("touchend", function(e) { paint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) })
-    window.addEventListener("touchmove", function(e) { paint(e.changedTouches[0].clientX, e.changedTouches[0].clientY) })
-    window.addEventListener("mousemove", function(e) { if (mouseDown) paint(e.clientX, e.clientY) })
-    window.addEventListener('resize', function(event) { svgEl.setAttribute('height', window.innerHeight) }, true);
+      star.setAttribute('d', path);
+      star.setAttribute('fill', color);
+      star.setAttribute('opacity', '0.9');
+      box.appendChild(star);
+    }
+
+    function paintHeart(x, y) {
+      var box = document.getElementById('elGroup');
+      var heart = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      var s = size / 20; // scale factor
+
+      // Heart shape path (centered at 0,0, then translated)
+      var path = `M ${x} ${y + 5*s}
+                  C ${x} ${y + 2*s}, ${x - 5*s} ${y - 3*s}, ${x - 10*s} ${y - 3*s}
+                  C ${x - 15*s} ${y - 3*s}, ${x - 20*s} ${y + 2*s}, ${x - 20*s} ${y + 7*s}
+                  C ${x - 20*s} ${y + 12*s}, ${x - 15*s} ${y + 17*s}, ${x} ${y + 25*s}
+                  C ${x + 15*s} ${y + 17*s}, ${x + 20*s} ${y + 12*s}, ${x + 20*s} ${y + 7*s}
+                  C ${x + 20*s} ${y + 2*s}, ${x + 15*s} ${y - 3*s}, ${x + 10*s} ${y - 3*s}
+                  C ${x + 5*s} ${y - 3*s}, ${x} ${y + 2*s}, ${x} ${y + 5*s} Z`;
+
+      heart.setAttribute('d', path);
+      heart.setAttribute('fill', color);
+      heart.setAttribute('opacity', '0.9');
+      box.appendChild(heart);
+    }
+
+    function paint(x, y) {
+      // Smooth drawing - interpolate between points
+      if (lastX !== null && lastY !== null) {
+        var dist = Math.hypot(x - lastX, y - lastY);
+        var steps = Math.max(1, Math.floor(dist / (size / 3)));
+
+        for (var i = 0; i <= steps; i++) {
+          var interpX = lastX + (x - lastX) * (i / steps);
+          var interpY = lastY + (y - lastY) * (i / steps);
+
+          if (tool === 'brush') {
+            paintCircle(interpX, interpY);
+          } else if (tool === 'star') {
+            if (i === steps) paintStar(interpX, interpY); // Only end point for stamps
+          } else if (tool === 'heart') {
+            if (i === steps) paintHeart(interpX, interpY);
+          }
+        }
+      } else {
+        if (tool === 'brush') {
+          paintCircle(x, y);
+        } else if (tool === 'star') {
+          paintStar(x, y);
+        } else if (tool === 'heart') {
+          paintHeart(x, y);
+        }
+      }
+
+      lastX = x;
+      lastY = y;
+    }
+
+    // Color selection
+    document.querySelectorAll('.color-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        color = this.dataset.color;
+        updateBrushPreview();
+      });
+    });
+
+    // Size slider
+    document.getElementById('sizeSlider').addEventListener('input', function() {
+      size = parseInt(this.value);
+      updateBrushPreview();
+    });
+
+    // Tool selection
+    document.getElementById('brushBtn').addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.querySelectorAll('.tool-btn').forEach(b => {
+        if (b.id.endsWith('Btn') && b.id !== 'clearBtn') b.classList.remove('active');
+      });
+      this.classList.add('active');
+      tool = 'brush';
+    });
+
+    document.getElementById('starBtn').addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.querySelectorAll('.tool-btn').forEach(b => {
+        if (b.id.endsWith('Btn') && b.id !== 'clearBtn') b.classList.remove('active');
+      });
+      this.classList.add('active');
+      tool = 'star';
+    });
+
+    document.getElementById('heartBtn').addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.querySelectorAll('.tool-btn').forEach(b => {
+        if (b.id.endsWith('Btn') && b.id !== 'clearBtn') b.classList.remove('active');
+      });
+      this.classList.add('active');
+      tool = 'heart';
+    });
+
+    // Clear button
+    document.getElementById('clearBtn').addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (confirm('Clear the canvas? 🎨')) {
+        document.getElementById('elGroup').innerHTML = '';
+      }
+    });
+
+    // Prevent toolbar clicks from painting
+    document.querySelector('.toolbar').addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+    document.querySelector('.toolbar').addEventListener('touchstart', function(e) {
+      e.stopPropagation();
+    });
+    document.querySelector('.toolbar').addEventListener('touchmove', function(e) {
+      e.stopPropagation();
+    });
+
+    // Mouse events
+    window.addEventListener("mousedown", function(e) {
+      if (!e.target.closest('.toolbar')) {
+        paint(e.clientX, e.clientY);
+      }
+    });
+
+    window.addEventListener("mousemove", function(e) {
+      if (mouseDown && !e.target.closest('.toolbar')) {
+        paint(e.clientX, e.clientY);
+      }
+    });
+
+    window.addEventListener("mouseup", function() {
+      lastX = null;
+      lastY = null;
+    });
+
+    // Touch events
+    window.addEventListener("touchstart", function(e) {
+      if (!e.target.closest('.toolbar')) {
+        e.preventDefault();
+        var touch = e.touches[0];
+        mouseDown = 1;
+        paint(touch.clientX, touch.clientY);
+      }
+    }, { passive: false });
+
+    window.addEventListener("touchmove", function(e) {
+      if (!e.target.closest('.toolbar')) {
+        e.preventDefault();
+        var touch = e.touches[0];
+        paint(touch.clientX, touch.clientY);
+      }
+    }, { passive: false });
+
+    window.addEventListener("touchend", function(e) {
+      if (!e.target.closest('.toolbar')) {
+        e.preventDefault();
+        mouseDown = 0;
+        lastX = null;
+        lastY = null;
+      }
+    }, { passive: false });
+
+    // Resize handling
+    window.addEventListener('resize', resizeSVG);
   });
 </script>
 <script>

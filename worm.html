@@ -1,65 +1,267 @@
 ---
 layout: default
 ---
+<style type="text/css">
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  
+  #wormbox {
+    width: 100vw;
+    height: 100vh;
+    cursor: none;
+  }
+  
+  .worm-segment {
+    transition: all 0.3s ease-out;
+  }
+  
+  .score-display {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 15px 25px;
+    border-radius: 15px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 1000;
+  }
+  
+  @media (max-width: 768px) {
+    .score-display {
+      font-size: 20px;
+      padding: 12px 20px;
+      top: 10px;
+      left: 10px;
+    }
+  }
+</style>
+
+<div class="score-display">
+  🐛 Length: <span id="scoreValue">1</span>
+</div>
+
 <svg id="wormbox" xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewPort='0 0 1000 1000'>
-  <g><circle id="worm" cx="0" cy="0" r="40" fill="green"></circle></g>
+  <defs>
+    <!-- Apple icon definition -->
+    <g id="appleIcon">
+      <!-- Apple body -->
+      <circle cx="0" cy="0" r="20" fill="#FF5252"/>
+      <ellipse cx="0" cy="0" rx="20" ry="22" fill="#FF5252"/>
+      <!-- Stem -->
+      <rect x="-2" y="-28" width="4" height="12" fill="#8D6E63" rx="1"/>
+      <!-- Leaf -->
+      <path d="M 2 -20 Q 12 -24 14 -14" fill="#66BB6A" stroke="none"/>
+      <!-- Highlight -->
+      <ellipse cx="-6" cy="-8" rx="8" ry="10" fill="#FF8A80" opacity="0.5"/>
+    </g>
+  </defs>
+  
   <g id="appleBox"></g>
+  <g id="wormG"></g>
 </svg>
 
 <script type="text/javascript">
-  var wormSize = 40;
-  var appleSize = 30;
-  var apples = 5;
+  var wormSegmentSize = 25;
+  var appleSize = 20;
+  var svgEl = document.getElementById('wormbox');
+  var wormSegments = [];
+  var wormPositions = [{x: 400, y: 400}];
+  var targetX = 400;
+  var targetY = 400;
+  var score = 0;
 
-  var svgEl = document.getElementById('wormbox')
+  var wormSegmentSize = 25;
+  var appleSize = 20;
+  var svgEl = document.getElementById('wormbox');
+  var wormSegments = [];
+  var wormPositions = [{x: 400, y: 400}];
+  var targetX = 400;
+  var targetY = 400;
+  var score = 0;
 
-  var addApples = function() {
-    if (document.querySelectorAll("g#appleBox circle").length > 3) return;
-
-    for (i = 0; i < apples; i++) {
-      drawApple()
-    }
+  // Initialize worm with head
+  function initWorm() {
+    var wormG = document.getElementById('wormG');
+    var head = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    head.setAttribute('cx', wormPositions[0].x);
+    head.setAttribute('cy', wormPositions[0].y);
+    head.setAttribute('r', wormSegmentSize);
+    head.setAttribute('fill', '#EA348B');
+    head.setAttribute('class', 'worm-segment');
+    head.setAttribute('id', 'worm-head');
+    
+    // Add eyes to head
+    var leftEye = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    leftEye.setAttribute('cx', wormPositions[0].x - 8);
+    leftEye.setAttribute('cy', wormPositions[0].y - 5);
+    leftEye.setAttribute('r', 4);
+    leftEye.setAttribute('fill', 'white');
+    leftEye.setAttribute('id', 'left-eye');
+    
+    var rightEye = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    rightEye.setAttribute('cx', wormPositions[0].x + 8);
+    rightEye.setAttribute('cy', wormPositions[0].y - 5);
+    rightEye.setAttribute('r', 4);
+    rightEye.setAttribute('fill', 'white');
+    rightEye.setAttribute('id', 'right-eye');
+    
+    wormG.appendChild(head);
+    wormG.appendChild(leftEye);
+    wormG.appendChild(rightEye);
+    wormSegments.push(head);
   }
 
-  var moveWorm = function(x, y) {
-    var worm = document.getElementById('worm')
-    worm.style.transform = 'translateY('+(y-25)+'px)';
-    worm.style.transform += 'translateX('+(x-25)+'px)';
+  // Add segment to worm
+  function addWormSegment() {
+    var wormG = document.getElementById('wormG');
+    var lastPos = wormPositions[wormPositions.length - 1];
+    var colors = ['#FF6B6B', '#FFA07A', '#FFD93D', '#6BCB77', '#4D96FF', '#BB8FCE'];
+    var segment = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    segment.setAttribute('cx', lastPos.x);
+    segment.setAttribute('cy', lastPos.y);
+    segment.setAttribute('r', wormSegmentSize);
+    segment.setAttribute('fill', colors[wormPositions.length % colors.length]);
+    segment.setAttribute('class', 'worm-segment');
+    
+    wormG.insertBefore(segment, wormG.firstChild);
+    wormSegments.push(segment);
+    wormPositions.push({x: lastPos.x, y: lastPos.y});
+    
+    score++;
+    document.getElementById('scoreValue').textContent = wormPositions.length;
+  }
 
-    // check apple collision
-    var appleElements = document.querySelectorAll("g#appleBox circle")
-
-    appleElements.forEach(function(apple) {
-      var aX = parseInt(apple.getAttribute('cx'))
-      var aY = parseInt(apple.getAttribute('cy'))
-      var wormRadius = parseInt(worm.getAttribute("r"))
-
-      // collision check (length of radius distances)
-      if (Math.sqrt(Math.pow((aX - x), 2) + Math.pow((aY - y), 2)) <= wormRadius) {
-        worm.setAttribute("r", wormRadius + 5); // increase worm
-        setTimeout(function() { apple.remove() }, 750) // remove apple
+  // Check apple collision
+  var checkAppleCollision = function() {
+    var head = wormPositions[0];
+    document.querySelectorAll("g#appleBox use").forEach(function(apple) {
+      var aX = parseFloat(apple.getAttribute('x'));
+      var aY = parseFloat(apple.getAttribute('y'));
+      
+      // Collision check - distance between centers
+      var distance = Math.sqrt(Math.pow((aX - head.x), 2) + Math.pow((aY - head.y), 2));
+      if (distance <= wormSegmentSize + appleSize) {
+        addWormSegment();
+        apple.remove();
+        drawApple();
       }
     });
+  }
 
-    if (document.querySelectorAll("g#appleBox circle").length < 3) {
-      setTimeout(function() { addApples() }, 4000)
+  // Move worm smoothly
+  var moveWorm = function(x, y) {
+    targetX = x;
+    targetY = y;
+  }
+
+  // Animation loop
+  function animate() {
+    var head = wormPositions[0];
+    
+    // Smooth movement towards target
+    var dx = targetX - head.x;
+    var dy = targetY - head.y;
+    var distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > 2) {
+      var speed = Math.min(5, distance * 0.1);
+      var vx = (dx / distance) * speed;
+      var vy = (dy / distance) * speed;
+      
+      // Update head position
+      wormPositions[0] = {x: head.x + vx, y: head.y + vy};
+      
+      // Update body segments - follow the leader
+      for (var i = 1; i < wormPositions.length; i++) {
+        var prevPos = wormPositions[i - 1];
+        var currPos = wormPositions[i];
+        var segDx = prevPos.x - currPos.x;
+        var segDy = prevPos.y - currPos.y;
+        var segDist = Math.sqrt(segDx * segDx + segDy * segDy);
+        
+        if (segDist > wormSegmentSize * 1.5) {
+          var segVx = (segDx / segDist) * (segDist - wormSegmentSize * 1.5) * 0.3;
+          var segVy = (segDy / segDist) * (segDist - wormSegmentSize * 1.5) * 0.3;
+          wormPositions[i] = {x: currPos.x + segVx, y: currPos.y + segVy};
+        }
+      }
+      
+      // Update DOM elements
+      for (var i = 0; i < wormSegments.length; i++) {
+        wormSegments[i].setAttribute('cx', wormPositions[i].x);
+        wormSegments[i].setAttribute('cy', wormPositions[i].y);
+      }
+      
+      // Update eyes
+      var leftEye = document.getElementById('left-eye');
+      var rightEye = document.getElementById('right-eye');
+      if (leftEye && rightEye) {
+        leftEye.setAttribute('cx', wormPositions[0].x - 8);
+        leftEye.setAttribute('cy', wormPositions[0].y - 5);
+        rightEye.setAttribute('cx', wormPositions[0].x + 8);
+        rightEye.setAttribute('cy', wormPositions[0].y - 5);
+      }
+      
+      checkAppleCollision();
     }
+    
+    requestAnimationFrame(animate);
   }
 
   var drawApple = function() {
-    var box = document.getElementById('appleBox')
-    var apple = document.createElementNS("http://www.w3.org/2000/svg", "circle")
-    apple.setAttribute('cx', Math.floor(Math.random() * window.innerWidth))
-    apple.setAttribute('cy', Math.floor(Math.random() * window.innerHeight))
-    apple.setAttribute('r', appleSize)
-    apple.setAttribute('fill', 'red')
-    box.appendChild(apple)
+    var box = document.getElementById('appleBox');
+    var apple = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    apple.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#appleIcon');
+    apple.setAttribute('x', Math.floor(Math.random() * (window.innerWidth - 80)) + 40);
+    apple.setAttribute('y', Math.floor(Math.random() * (window.innerHeight - 80)) + 40);
+    box.appendChild(apple);
   }
 
-  svgEl.setAttribute('height', window.innerHeight)
+  // Initialize
+  svgEl.setAttribute('width', window.innerWidth);
+  svgEl.setAttribute('height', window.innerHeight);
+  
+  initWorm();
+  
+  // Draw initial apples
+  for (var i = 0; i < 8; i++) {
+    drawApple();
+  }
 
-  addApples()
-  moveWorm(400,400)
-  window.addEventListener("touchend", function(e) { moveWorm(e.changedTouches[0].clientX, e.changedTouches[0].clientY) }, false)
-  window.addEventListener("click", function(e) { moveWorm(e.clientX, e.clientY) }, false)
+  // Start animation loop
+  animate();
+
+  // Event listeners
+  window.addEventListener("touchstart", function(e) { 
+    e.preventDefault();
+    moveWorm(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+  
+  window.addEventListener("touchmove", function(e) { 
+    e.preventDefault();
+    moveWorm(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+  
+  window.addEventListener("click", function(e) { 
+    moveWorm(e.clientX, e.clientY);
+  });
+  
+  window.addEventListener("mousemove", function(e) { 
+    moveWorm(e.clientX, e.clientY);
+  });
+  
+  window.addEventListener('resize', function() {
+    svgEl.setAttribute('width', window.innerWidth);
+    svgEl.setAttribute('height', window.innerHeight);
+  });
+
 </script>
