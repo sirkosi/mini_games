@@ -24,24 +24,30 @@ layout: default
     left: 50%;
     transform: translateX(-50%);
     background: rgba(255, 255, 255, 0.95);
-    padding: 8px 12px;
-    border-radius: 25px;
+    padding: 6px 10px;
+    border-radius: 20px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.2);
     display: flex;
-    gap: 6px;
+    gap: 5px;
     align-items: center;
     flex-wrap: nowrap;
     justify-content: center;
-    max-width: 95vw;
+    max-width: 96vw;
     overflow-x: auto;
     overflow-y: hidden;
     z-index: 1000;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .toolbar::-webkit-scrollbar {
+    display: none;
   }
 
   .color-btn {
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
     border: 2px solid #fff;
     border-radius: 50%;
     cursor: pointer;
@@ -58,14 +64,14 @@ layout: default
   .tool-btn {
     background: #fff;
     border: 2px solid #ddd;
-    border-radius: 10px;
-    padding: 6px 10px;
-    font-size: 14px;
-    font-weight: bold;
+    border-radius: 8px;
+    padding: 5px 9px;
+    font-size: 16px;
     cursor: pointer;
     transition: all 0.2s;
     box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     white-space: nowrap;
+    line-height: 1;
   }
 
   .tool-btn:active {
@@ -82,15 +88,15 @@ layout: default
   .size-control {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     background: white;
-    padding: 4px 10px;
-    border-radius: 10px;
+    padding: 3px 8px;
+    border-radius: 8px;
     border: 2px solid #ddd;
   }
 
   #sizeSlider {
-    width: 70px;
+    width: 60px;
     height: 6px;
     cursor: pointer;
   }
@@ -104,7 +110,7 @@ layout: default
 
   .separator {
     width: 1px;
-    height: 28px;
+    height: 24px;
     background: #ddd;
     flex-shrink: 0;
   }
@@ -112,40 +118,75 @@ layout: default
   @media (max-width: 768px) {
     .toolbar {
       top: 3px;
-      padding: 6px 10px;
-      gap: 5px;
+      padding: 5px 8px;
+      gap: 4px;
+      flex-wrap: wrap;
+      max-width: 98vw;
     }
     .color-btn {
-      width: 28px;
-      height: 28px;
-      min-width: 28px;
+      width: 26px;
+      height: 26px;
+      min-width: 26px;
+      border-width: 1.5px;
     }
     .tool-btn {
-      padding: 5px 8px;
-      font-size: 12px;
+      padding: 4px 7px;
+      font-size: 14px;
     }
     #sizeSlider {
-      width: 60px;
+      width: 50px;
+    }
+    .separator {
+      height: 20px;
+    }
+    .size-control {
+      padding: 2px 6px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .toolbar {
+      top: 3px;
+      padding: 4px 6px;
+      gap: 3px;
+      flex-wrap: wrap;
+      max-width: 98vw;
+      border-radius: 15px;
+    }
+    .color-btn {
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      border-width: 1.5px;
+    }
+    .tool-btn {
+      padding: 3px 6px;
+      font-size: 13px;
+    }
+    #sizeSlider {
+      width: 45px;
+    }
+    .separator {
+      display: none;
+    }
+    .size-control {
+      padding: 2px 5px;
     }
   }
 </style>
 
 <div class="toolbar">
   <div class="color-btn active" data-color="#FF6B6B" style="background-color: #FF6B6B;" title="Red"></div>
-  <div class="color-btn" data-color="#4ECDC4" style="background-color: #4ECDC4;" title="Cyan"></div>
-  <div class="color-btn" data-color="#45B7D1" style="background-color: #45B7D1;" title="Blue"></div>
   <div class="color-btn" data-color="#FFA07A" style="background-color: #FFA07A;" title="Orange"></div>
-  <div class="color-btn" data-color="#98D8C8" style="background-color: #98D8C8;" title="Mint"></div>
   <div class="color-btn" data-color="#F7DC6F" style="background-color: #F7DC6F;" title="Yellow"></div>
-  <div class="color-btn" data-color="#BB8FCE" style="background-color: #BB8FCE;" title="Purple"></div>
-  <div class="color-btn" data-color="#F1948A" style="background-color: #F1948A;" title="Pink"></div>
-  <div class="color-btn" data-color="#85C1E2" style="background-color: #85C1E2;" title="Sky"></div>
   <div class="color-btn" data-color="#52BE80" style="background-color: #52BE80;" title="Green"></div>
+  <div class="color-btn" data-color="#45B7D1" style="background-color: #45B7D1;" title="Blue"></div>
+  <div class="color-btn" data-color="#BB8FCE" style="background-color: #BB8FCE;" title="Purple"></div>
 
   <div class="separator"></div>
 
   <div class="size-control">
-    <span style="font-size: 12px;">🖌️</span>
+    <span style="font-size: 11px;">🖌️</span>
     <input type="range" id="sizeSlider" min="5" max="80" value="25">
     <div class="brush-preview" id="brushPreview"></div>
   </div>
