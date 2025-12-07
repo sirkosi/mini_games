@@ -3,9 +3,8 @@
  "name": "Mini Games",
  "short_name": "MiniG",
  "display": "standalone",
- "start_url": "/paint_tools/",
- "theme_color": "#ffffff",
- "background_color": "#ffffff",
- "display": "fullscreen",
+ "start_url": "/mini_games/",
+ "theme_color": "#667eea",
+ "background_color": "#667eea",
  "icons": []
 }
