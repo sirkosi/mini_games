@@ -168,7 +168,6 @@ layout: default
   <div id="mainContent">
     <div style="display:flex;flex-direction:column;align-items:center;gap:24px;">
       <div class="emoji-display" id="emojiDisplay"></div>
-      <div class="word-label"   id="wordLabel"></div>
       <div class="letter-row"   id="letterRow"></div>
       <div class="feedback"     id="feedback"></div>
       <button class="next-btn"  id="nextBtn" onclick="naechsteRunde()">Weiter ▶</button>
@@ -259,8 +258,6 @@ const renderRunde = () => {
   const r = rundeListe[aktuell];
   beantwortet = false;
   document.getElementById('emojiDisplay').textContent = r.emoji;
-  document.getElementById('wordLabel').innerHTML =
-    `<span class="first-letter">${r.richtig}</span>${r.wort.slice(1).toLowerCase()}`;
   document.getElementById('feedback').textContent = '';
   document.getElementById('nextBtn').style.display = 'none';
 

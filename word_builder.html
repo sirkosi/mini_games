@@ -260,8 +260,8 @@ let gelöst = false;
 const spreche = (text) => {
   window.speechSynthesis.cancel();
   if (!text) {
-    const buchstaben = aktWort.split('').join('... ');
-    text = `Buchstabiere das Wort: ${aktWort}. ${buchstaben}`;
+    const buchstaben = aktWort.toLowerCase().split('').join('... ');
+    text = `${aktWort}. Buchstabiere: ${buchstaben}`;
   }
   const msg = new SpeechSynthesisUtterance(text);
   msg.lang = 'de-DE';
@@ -390,7 +390,7 @@ const ladeWort = () => {
   aktWort = eintrag.wort;
 
   document.getElementById('hintEmoji').textContent = eintrag.emoji;
-  document.getElementById('instruction').textContent = `Buchstabiere: ${aktWort}`;
+  document.getElementById('instruction').textContent = `${aktWort.length} Buchstaben – welches Wort zeigt das Bild?`;
   document.getElementById('feedback').textContent = '';
   document.getElementById('nextBtn').style.display = 'none';
 
