@@ -1,0 +1,441 @@
+---
+layout: default
+---
+<style>
+  html, body {
+    position: static !important;
+    overflow: auto !important;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+  .icon-btn {
+    background: rgba(255,255,255,0.55);
+    border: none;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    font-size: 1.6rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .icon-btn:active { background: rgba(255,255,255,0.85); }
+
+  .game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 16px 30px;
+    gap: 24px;
+  }
+
+  .hint-emoji {
+    font-size: 6rem;
+    line-height: 1;
+    text-align: center;
+    animation: pop-in 0.35s ease;
+    filter: drop-shadow(2px 4px 8px rgba(0,0,0,0.12));
+  }
+  @keyframes pop-in {
+    from { transform: scale(0.4); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  .instruction {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #006064;
+    text-align: center;
+  }
+
+  /* TARGET SLOTS */
+  .slots-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .slot {
+    width: 80px;
+    height: 80px;
+    border: 3.5px dashed #80cbc4;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, border-color 0.2s;
+    position: relative;
+  }
+  .slot.over { background: rgba(128,203,196,0.35); border-color: #00acc1; }
+  .slot.filled { border-style: solid; border-color: #00acc1; background: white; }
+  .slot.correct-all { border-color: #4caf50; background: #e8f5e9; }
+  .slot.wrong-flash { animation: shake 0.45s ease; background: #ffebee; border-color: #ef9a9a; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  /* LETTER TILES */
+  .tile {
+    width: 70px;
+    height: 70px;
+    border-radius: 14px;
+    font-size: 2.4rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    touch-action: none;
+    box-shadow: 0 5px 14px rgba(0,0,0,0.18);
+    border: none;
+    color: white;
+    transition: opacity 0.2s;
+  }
+  .tile:active { cursor: grabbing; }
+  .tile.placed { opacity: 0.2; pointer-events: none; }
+
+  .tile-colors { /* set by JS */ }
+
+  .pool {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 22px;
+    min-height: 100px;
+    width: 100%;
+    max-width: 360px;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .feedback {
+    font-size: 2rem;
+    font-weight: 800;
+    text-align: center;
+    min-height: 54px;
+    color: #006064;
+  }
+
+  .next-btn {
+    background: #00838f;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 36px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0,131,143,0.4);
+    touch-action: manipulation;
+    display: none;
+  }
+
+  @media (min-width: 600px) {
+    .hint-emoji { font-size: 8rem; }
+    .slot  { width: 96px; height: 96px; }
+    .tile  { width: 84px; height: 84px; font-size: 2.8rem; }
+    .instruction { font-size: 1.55rem; }
+  }
+</style>
+
+<div class="topbar">
+  <a href="/mini_games/" class="icon-btn">🏠</a>
+  <button class="icon-btn" onclick="spreche()">🔊</button>
+</div>
+
+<div class="game-area">
+  <div class="hint-emoji" id="hintEmoji"></div>
+  <div class="instruction" id="instruction"></div>
+
+  <div class="slots-row" id="slotsRow"></div>
+
+  <div class="pool" id="pool"></div>
+
+  <div class="feedback" id="feedback"></div>
+  <button class="next-btn" id="nextBtn" onclick="naechstesWort()">Weiter ▶</button>
+</div>
+
+<script>
+const WOERTER = [
+  // --- 3 Buchstaben ---
+  { wort: 'KUH', emoji: '🐄' },
+  { wort: 'HUT', emoji: '🎩' },
+  { wort: 'BUS', emoji: '🚌' },
+  { wort: 'EIS', emoji: '🍦' },
+  { wort: 'ZUG', emoji: '🚂' },
+  { wort: 'BAD', emoji: '🛁' },
+  { wort: 'OHR', emoji: '👂' },
+  { wort: 'SEE', emoji: '🌊' },
+  { wort: 'TOR', emoji: '⚽' },
+  { wort: 'OMA', emoji: '👵' },
+  { wort: 'OPA', emoji: '👴' },
+  { wort: 'UHR', emoji: '⏰' },
+  { wort: 'TEE', emoji: '🍵' },
+  { wort: 'ARM', emoji: '💪' },
+  { wort: 'WAL', emoji: '🐋' },
+  { wort: 'TON', emoji: '🎵' },
+  { wort: 'WEG', emoji: '🛤️' },
+  { wort: 'TAG', emoji: '☀️' },
+  { wort: 'TOP', emoji: '🔝' },
+  { wort: 'HAI', emoji: '🦈' },
+  // --- 4 Buchstaben ---
+  { wort: 'MAMA', emoji: '👩' },
+  { wort: 'PAPA', emoji: '👨' },
+  { wort: 'BAUM', emoji: '🌳' },
+  { wort: 'AUTO', emoji: '🚗' },
+  { wort: 'HUND', emoji: '🐶' },
+  { wort: 'BUCH', emoji: '📚' },
+  { wort: 'BALL', emoji: '⚽' },
+  { wort: 'MOND', emoji: '🌙' },
+  { wort: 'IGEL', emoji: '🦔' },
+  { wort: 'BROT', emoji: '🍞' },
+  { wort: 'HAND', emoji: '🖐️' },
+  { wort: 'AFFE', emoji: '🐒' },
+  { wort: 'ENTE', emoji: '🦆' },
+  { wort: 'BOOT', emoji: '⛵' },
+  { wort: 'HASE', emoji: '🐇' },
+  { wort: 'ROSE', emoji: '🌹' },
+  { wort: 'HERZ', emoji: '❤️' },
+  { wort: 'WOLF', emoji: '🐺' },
+  { wort: 'DACH', emoji: '🏠' },
+  { wort: 'FUSS', emoji: '🦶' },
+  { wort: 'GELD', emoji: '💰' },
+  { wort: 'SOFA', emoji: '🛋️' },
+  { wort: 'GLAS', emoji: '🥛' },
+  { wort: 'HAHN', emoji: '🐓' },
+  { wort: 'LAMM', emoji: '🐑' },
+  { wort: 'NASE', emoji: '👃' },
+  { wort: 'REGEN', emoji: '🌧️' },
+  // --- 5 Buchstaben ---
+  { wort: 'PFERD', emoji: '🐴' },
+  { wort: 'TIGER', emoji: '🐯' },
+  { wort: 'STERN', emoji: '⭐' },
+  { wort: 'BLUME', emoji: '🌸' },
+  { wort: 'VOGEL', emoji: '🐦' },
+  { wort: 'TISCH', emoji: '🪑' },
+  { wort: 'BIENE', emoji: '🐝' },
+  { wort: 'PIZZA', emoji: '🍕' },
+  { wort: 'TRAUM', emoji: '💭' },
+  { wort: 'KATZE', emoji: '🐱' },
+  { wort: 'FUCHS', emoji: '🦊' },
+  { wort: 'SCHAF', emoji: '🐑' },
+  { wort: 'LAMPE', emoji: '💡' },
+];
+
+const TILE_COLORS = ['#e91e63', '#9c27b0', '#2196f3', '#00bcd4', '#ff9800', '#4caf50'];
+
+let wortListe = [];
+let wortIdx = 0;
+let aktWort = '';
+let clone = null;
+let dragging = null;
+let draggingLetter = null;
+let gelöst = false;
+
+const spreche = (text) => {
+  window.speechSynthesis.cancel();
+  if (!text) {
+    const buchstaben = aktWort.split('').join('... ');
+    text = `Buchstabiere das Wort: ${aktWort}. ${buchstaben}`;
+  }
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.lang = 'de-DE';
+  msg.rate = 0.75;
+  window.speechSynthesis.speak(msg);
+};
+
+const getSlotBuchstaben = () => {
+  const slots = document.querySelectorAll('.slot');
+  return [...slots].map(s => s.dataset.placed || '').join('');
+};
+
+const pruefen = () => {
+  const eingabe = getSlotBuchstaben();
+  if (eingabe.length < aktWort.length) return;
+
+  if (eingabe === aktWort) {
+    gelöst = true;
+    document.querySelectorAll('.slot').forEach(s => s.classList.add('correct-all'));
+    document.getElementById('feedback').textContent = '⭐ Richtig! Super! ⭐';
+    spreche(`Richtig! Das Wort ist ${aktWort}! Toll gemacht!`);
+    document.getElementById('nextBtn').style.display = 'inline-block';
+  } else {
+    document.querySelectorAll('.slot').forEach(s => s.classList.add('wrong-flash'));
+    setTimeout(() => {
+      document.querySelectorAll('.slot').forEach(s => {
+        s.classList.remove('wrong-flash', 'filled');
+        s.dataset.placed = '';
+        s.innerHTML = '';
+      });
+      // Return tiles to pool
+      document.querySelectorAll('.tile').forEach(t => {
+        t.classList.remove('placed');
+        t.style.opacity = '1';
+        t.style.pointerEvents = 'auto';
+      });
+    }, 600);
+    spreche('Nicht ganz richtig. Versuch es nochmal!');
+  }
+};
+
+const attachDrag = (tile, letter) => {
+  tile.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (gelöst) return;
+    dragging = tile;
+    draggingLetter = letter;
+
+    clone = document.createElement('div');
+    clone.className = 'tile';
+    clone.textContent = letter;
+    clone.style.cssText = `position:fixed;z-index:999;pointer-events:none;opacity:0.9;transform:scale(1.12);transition:none;background:${tile.style.background};width:${tile.offsetWidth}px;height:${tile.offsetHeight}px;font-size:${window.getComputedStyle(tile).fontSize};font-weight:900;color:white;display:flex;align-items:center;justify-content:center;border-radius:14px;`;
+    positionClone(e);
+    document.body.appendChild(clone);
+    tile.style.opacity = '0.25';
+    tile.setPointerCapture(e.pointerId);
+  });
+
+  tile.addEventListener('pointermove', (e) => {
+    e.preventDefault();
+    positionClone(e);
+  });
+
+  tile.addEventListener('pointerup', (e) => {
+    e.preventDefault();
+    if (!clone) return;
+    document.body.removeChild(clone);
+    clone = null;
+    tile.style.opacity = '1';
+
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    const slot = target?.closest('.slot');
+
+    if (slot && !slot.dataset.placed) {
+      // Place letter in slot
+      slot.dataset.placed = letter;
+      slot.classList.add('filled');
+
+      // Show letter in slot
+      const disp = document.createElement('div');
+      disp.style.cssText = `font-size:2.4rem;font-weight:900;color:${tile.style.background};`;
+      disp.textContent = letter;
+
+      // Remove button in slot to allow replacing
+      const removeBtn = document.createElement('button');
+      removeBtn.style.cssText = 'position:absolute;top:-6px;right:-6px;background:#ef5350;color:white;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:0.8rem;font-weight:900;touch-action:manipulation;line-height:1;';
+      removeBtn.textContent = '×';
+      removeBtn.onclick = () => {
+        if (gelöst) return;
+        slot.innerHTML = '';
+        slot.dataset.placed = '';
+        slot.classList.remove('filled');
+        tile.classList.remove('placed');
+        tile.style.opacity = '1';
+        tile.style.pointerEvents = 'auto';
+      };
+
+      slot.appendChild(disp);
+      slot.appendChild(removeBtn);
+      tile.classList.add('placed');
+
+      if (getSlotBuchstaben().length === aktWort.length) {
+        setTimeout(pruefen, 200);
+      }
+    }
+
+    dragging = null;
+    draggingLetter = null;
+  });
+
+  tile.addEventListener('pointercancel', () => {
+    if (clone) { document.body.removeChild(clone); clone = null; }
+    if (dragging) { dragging.style.opacity = '1'; dragging = null; }
+  });
+};
+
+const positionClone = (e) => {
+  if (!clone) return;
+  clone.style.left = (e.clientX - 35) + 'px';
+  clone.style.top  = (e.clientY - 35) + 'px';
+};
+
+const ladeWort = () => {
+  gelöst = false;
+  const eintrag = wortListe[wortIdx];
+  aktWort = eintrag.wort;
+
+  document.getElementById('hintEmoji').textContent = eintrag.emoji;
+  document.getElementById('instruction').textContent = `Buchstabiere: ${aktWort}`;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('nextBtn').style.display = 'none';
+
+  // Build slots
+  const slotsRow = document.getElementById('slotsRow');
+  slotsRow.innerHTML = '';
+  for (let i = 0; i < aktWort.length; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+    slot.id = 'slot' + i;
+    slot.dataset.placed = '';
+    slotsRow.appendChild(slot);
+  }
+
+  // Build shuffled tiles
+  const shuffle = aktWort.split('').sort(() => Math.random() - 0.5);
+  const pool = document.getElementById('pool');
+  pool.innerHTML = '';
+  shuffle.forEach((letter, i) => {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.textContent = letter;
+    tile.style.background = TILE_COLORS[i % TILE_COLORS.length];
+    tile.dataset.letter = letter;
+    attachDrag(tile, letter);
+    pool.appendChild(tile);
+  });
+
+  setTimeout(spreche, 300);
+};
+
+const naechstesWort = () => {
+  wortIdx++;
+  if (wortIdx >= wortListe.length) {
+    wortListe = [...WOERTER].sort(() => Math.random() - 0.5);
+    wortIdx = 0;
+  }
+  ladeWort();
+};
+
+const spielStarten = () => {
+  wortListe = [...WOERTER].sort(() => Math.random() - 0.5);
+  wortIdx = 0;
+  ladeWort();
+};
+
+spielStarten();
+</script>

@@ -1,0 +1,349 @@
+---
+layout: default
+---
+<style>
+  html, body {
+    position: static !important;
+    overflow: auto !important;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+  .icon-btn {
+    background: rgba(255,255,255,0.55);
+    border: none;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    font-size: 1.6rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .icon-btn:active { background: rgba(255,255,255,0.85); }
+
+  .game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 16px 30px;
+    gap: 24px;
+  }
+
+  .instruction {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #6a1b9a;
+    text-align: center;
+  }
+
+  /* HOLES ROW */
+  .holes-row {
+    display: flex;
+    gap: 18px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .hole-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .hole {
+    width: 90px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: background 0.3s;
+  }
+
+  /* Outline shapes via SVG */
+  .hole svg.outline {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0; left: 0;
+    pointer-events: none;
+  }
+
+  .hole.highlight { filter: brightness(1.15); }
+  .hole.correct svg.outline { filter: drop-shadow(0 0 8px #4caf50); }
+  .hole.wrong   { animation: shake 0.4s ease; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  .hole-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #4a148c;
+  }
+
+  /* SHAPES (draggable) */
+  .pieces-row {
+    display: flex;
+    gap: 22px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 16px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 22px;
+    width: 100%;
+    max-width: 380px;
+    box-sizing: border-box;
+  }
+
+  .piece {
+    cursor: grab;
+    touch-action: none;
+    font-size: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+  }
+  .piece:active { cursor: grabbing; }
+
+  .piece.placed { opacity: 0.2; pointer-events: none; }
+
+  .feedback {
+    font-size: 1.8rem;
+    font-weight: 800;
+    text-align: center;
+    min-height: 48px;
+    color: #6a1b9a;
+  }
+
+  .next-btn {
+    background: #8e24aa;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 36px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(142,36,170,0.4);
+    touch-action: manipulation;
+    display: none;
+  }
+
+  @media (min-width: 600px) {
+    .hole { width: 110px; height: 110px; }
+    .instruction { font-size: 1.6rem; }
+  }
+</style>
+
+<div class="topbar">
+  <a href="/mini_games/" class="icon-btn">🏠</a>
+  <button class="icon-btn" onclick="spreche()">🔊</button>
+</div>
+
+<div class="game-area">
+  <div class="instruction">🔷 Bringe jede Form zu ihrem Platz!</div>
+
+  <div class="holes-row" id="holesRow"></div>
+
+  <div class="pieces-row" id="piecesRow"></div>
+
+  <div class="feedback" id="feedback"></div>
+  <button class="next-btn" id="nextBtn" onclick="neueRunde()">Weiter ▶</button>
+</div>
+
+<script>
+const SHAPES = [
+  {
+    id: 'kreis',
+    label: 'Kreis',
+    color: '#e91e63',
+    outlineSVG: `<svg class="outline" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="45" cy="45" r="38" fill="none" stroke="#e91e63" stroke-width="5" stroke-dasharray="8 4"/>
+    </svg>`,
+    filledSVG: (sz) => `<svg width="${sz}" height="${sz}" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="45" cy="45" r="38" fill="#e91e63"/>
+    </svg>`,
+  },
+  {
+    id: 'quadrat',
+    label: 'Quadrat',
+    color: '#2196f3',
+    outlineSVG: `<svg class="outline" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8" y="8" width="74" height="74" rx="6" fill="none" stroke="#2196f3" stroke-width="5" stroke-dasharray="8 4"/>
+    </svg>`,
+    filledSVG: (sz) => `<svg width="${sz}" height="${sz}" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8" y="8" width="74" height="74" rx="6" fill="#2196f3"/>
+    </svg>`,
+  },
+  {
+    id: 'dreieck',
+    label: 'Dreieck',
+    color: '#ff9800',
+    outlineSVG: `<svg class="outline" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="45,6 82,80 8,80" fill="none" stroke="#ff9800" stroke-width="5" stroke-dasharray="8 4" stroke-linejoin="round"/>
+    </svg>`,
+    filledSVG: (sz) => `<svg width="${sz}" height="${sz}" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="45,6 82,80 8,80" fill="#ff9800" stroke-linejoin="round"/>
+    </svg>`,
+  },
+];
+
+let placedCount = 0;
+let clone = null;
+let dragging = null;
+let draggingId = null;
+let originParent = null;
+let originNext = null;
+
+const spreche = (text) => {
+  window.speechSynthesis.cancel();
+  const msg = new SpeechSynthesisUtterance(text || 'Bringe jede Form zu ihrem richtigen Platz!');
+  msg.lang = 'de-DE';
+  msg.rate = 0.85;
+  window.speechSynthesis.speak(msg);
+};
+
+const neueRunde = () => {
+  placedCount = 0;
+  clone = null;
+  dragging = null;
+  draggingId = null;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('nextBtn').style.display = 'none';
+
+  // Build holes (always same order: kreis, quadrat, dreieck)
+  const holes = document.getElementById('holesRow');
+  holes.innerHTML = '';
+  SHAPES.forEach(s => {
+    const wrap = document.createElement('div');
+    wrap.className = 'hole-wrap';
+
+    const hole = document.createElement('div');
+    hole.className = 'hole';
+    hole.id = 'hole-' + s.id;
+    hole.dataset.shape = s.id;
+    hole.innerHTML = s.outlineSVG;
+
+    const lbl = document.createElement('div');
+    lbl.className = 'hole-label';
+    lbl.textContent = s.label;
+
+    wrap.appendChild(hole);
+    wrap.appendChild(lbl);
+    holes.appendChild(wrap);
+  });
+
+  // Build shuffled pieces
+  const shuffled = [...SHAPES].sort(() => Math.random() - 0.5);
+  const pieces = document.getElementById('piecesRow');
+  pieces.innerHTML = '';
+  shuffled.forEach(s => {
+    const piece = document.createElement('div');
+    piece.className = 'piece';
+    piece.id = 'piece-' + s.id;
+    piece.dataset.shape = s.id;
+    piece.innerHTML = s.filledSVG(72);
+    attachDrag(piece, s.id);
+    pieces.appendChild(piece);
+  });
+
+  spreche();
+};
+
+const attachDrag = (el, shapeId) => {
+  el.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    dragging = el;
+    draggingId = shapeId;
+    originParent = el.parentElement;
+    originNext = el.nextSibling;
+
+    const shape = SHAPES.find(s => s.id === shapeId);
+    clone = document.createElement('div');
+    clone.innerHTML = shape.filledSVG(80);
+    clone.style.cssText = 'position:fixed;z-index:999;pointer-events:none;opacity:0.85;transform:scale(1.1);transition:none;';
+    positionClone(e);
+    document.body.appendChild(clone);
+    el.style.opacity = '0.25';
+    el.setPointerCapture(e.pointerId);
+  });
+  el.addEventListener('pointermove', (e) => {
+    e.preventDefault();
+    positionClone(e);
+  });
+  el.addEventListener('pointerup', (e) => {
+    e.preventDefault();
+    if (!clone) return;
+    document.body.removeChild(clone);
+    clone = null;
+    el.style.opacity = '1';
+
+    // Use elementFromPoint to detect target hole
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    const hole = target?.closest('.hole');
+
+    if (hole) {
+      const targetShape = hole.dataset.shape;
+      if (targetShape === draggingId) {
+        // Correct!
+        hole.innerHTML = SHAPES.find(s => s.id === draggingId).filledSVG(80);
+        hole.classList.add('correct');
+        el.classList.add('placed');
+        placedCount++;
+        if (placedCount === 3) {
+          setTimeout(() => {
+            document.getElementById('feedback').textContent = '⭐ Alle Formen passen! Super! ⭐';
+            spreche('Wunderbar! Alle Formen passen perfekt! Super gemacht!');
+            document.getElementById('nextBtn').style.display = 'inline-block';
+          }, 200);
+        }
+      } else {
+        // Wrong
+        hole.classList.add('wrong');
+        setTimeout(() => hole.classList.remove('wrong'), 500);
+        spreche('Das ist nicht die richtige Form. Versuch es nochmal!');
+      }
+    }
+    dragging = null;
+    draggingId = null;
+  });
+  el.addEventListener('pointercancel', () => {
+    if (clone) { document.body.removeChild(clone); clone = null; }
+    if (dragging) { dragging.style.opacity = '1'; dragging = null; }
+  });
+};
+
+const positionClone = (e) => {
+  if (!clone) return;
+  clone.style.left = (e.clientX - 40) + 'px';
+  clone.style.top  = (e.clientY - 40) + 'px';
+};
+
+neueRunde();
+</script>

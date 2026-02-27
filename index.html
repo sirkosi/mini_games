@@ -6,9 +6,16 @@ layout: default
   body {
     margin: 0;
     padding: 10px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 40%, #a18cd1 100%);
     min-height: 100vh;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-y: auto !important;
+    position: static !important;
+  }
+
+  html {
+    position: static !important;
+    overflow: auto !important;
   }
 
   .container {
@@ -20,249 +27,209 @@ layout: default
   .header {
     text-align: center;
     color: white;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .header-emoji {
+    font-size: 3.5rem;
+    line-height: 1;
+    display: block;
+    filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
   }
 
   .header h1 {
     font-size: 2em;
-    margin: 0 0 8px 0;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    margin: 6px 0 0 0;
+    text-shadow: 2px 2px 6px rgba(0,0,0,0.25);
+    letter-spacing: 2px;
   }
 
-  .header p {
-    font-size: 1em;
-    opacity: 0.9;
-    margin: 0;
+  .audio-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: rgba(255,255,255,0.3);
+    border: none;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    font-size: 1.6rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    touch-action: manipulation;
+  }
+
+  .audio-btn:active {
+    background: rgba(255,255,255,0.6);
   }
 
   .games-grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px;
-    padding: 10px 0;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    padding: 10px 0 20px;
   }
 
   .game-card {
     background: white;
-    border-radius: 20px;
-    padding: 20px;
+    border-radius: 22px;
+    padding: 16px 10px 14px;
     text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     text-decoration: none;
     color: inherit;
-    display: block;
-  }
-
-  .game-card:hover {
-    transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .game-card:active {
-    transform: translateY(-5px) scale(1.01);
+    transform: scale(0.96);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
 
-  .game-icon {
-    width: 150px;
-    height: 150px;
-    margin: 0 auto 15px;
-    transition: transform 0.3s ease;
+  .game-emoji {
+    font-size: 4rem;
+    line-height: 1.1;
+    display: block;
+    transition: transform 0.2s ease;
   }
 
-  .game-card:hover .game-icon {
-    transform: scale(1.1) rotate(5deg);
+  .game-card:active .game-emoji {
+    transform: scale(1.15) rotate(8deg);
   }
 
   .game-title {
-    font-size: 1.8em;
-    font-weight: bold;
-    margin: 10px 0 8px 0;
-    color: #333;
+    font-size: 1rem;
+    font-weight: 800;
+    margin: 8px 0 0 0;
+    color: #444;
+    line-height: 1.2;
   }
 
-  .game-description {
-    font-size: 1em;
-    color: #666;
-    margin: 0;
-    line-height: 1.4;
-  }
-
-  /* Tablet and larger */
+  /* Tablet */
   @media (min-width: 600px) {
-    body {
-      padding: 15px;
-    }
+    body { padding: 16px; }
 
-    .container {
-      padding: 15px;
-    }
-
-    .header {
-      margin-bottom: 30px;
-    }
-
-    .header h1 {
-      font-size: 2.5em;
-    }
-
-    .header p {
-      font-size: 1.1em;
-    }
+    .header-emoji { font-size: 4.5rem; }
+    .header h1 { font-size: 2.6em; }
 
     .games-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 25px;
-      padding: 15px 0;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
     }
 
-    .game-card {
-      padding: 25px;
-    }
-
-    .game-icon {
-      width: 180px;
-      height: 180px;
-    }
+    .game-card { padding: 24px 16px 20px; }
+    .game-emoji { font-size: 5.5rem; }
+    .game-title { font-size: 1.15rem; margin-top: 10px; }
   }
 
   /* Desktop */
   @media (min-width: 1024px) {
-    body {
-      padding: 20px;
-    }
-
-    .container {
-      padding: 20px;
-    }
-
-    .header {
-      margin-bottom: 40px;
-    }
-
-    .header h1 {
-      font-size: 3em;
-      margin: 0 0 10px 0;
-    }
-
-    .header p {
-      font-size: 1.2em;
-    }
+    body { padding: 24px; }
 
     .games-grid {
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 30px;
-      padding: 20px 0;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 26px;
     }
 
     .game-card {
-      padding: 30px;
-      border-radius: 25px;
+      padding: 30px 20px 26px;
+      border-radius: 28px;
     }
 
-    .game-icon {
-      width: 200px;
-      height: 200px;
-      margin: 0 auto 20px;
+    .game-card:hover {
+      transform: translateY(-8px) scale(1.03);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.22);
     }
 
-    .game-title {
-      font-size: 2em;
-      margin: 15px 0 10px 0;
+    .game-card:hover .game-emoji {
+      transform: scale(1.18) rotate(5deg);
     }
 
-    .game-description {
-      font-size: 1.1em;
-      line-height: 1.5;
-    }
+    .game-emoji { font-size: 6rem; }
+    .game-title { font-size: 1.25rem; margin-top: 12px; }
   }
 </style>
 
 <div class="container">
   <div class="header">
-    <h1>🎮 Mini Games 🎮</h1>
-    <p>Fun games for kids on tablets!</p>
+    <span class="header-emoji">🎮</span>
+    <h1>Spiele</h1>
+    <button class="audio-btn" onclick="spreche()" title="Vorlesen">🔊</button>
   </div>
 
   <div class="games-grid">
-    <a href="/mini_games/paint.html" class="game-card">
-      <svg class="game-icon" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-      <svg class="game-icon" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-        <!-- Paint palette background -->
-        <circle cx="100" cy="100" r="80" fill="#FFE5B4" stroke="#8B4513" stroke-width="4"/>
 
-        <!-- Paint wells -->
-        <circle cx="70" cy="70" r="15" fill="#FF6B6B"/>
-        <circle cx="130" cy="70" r="15" fill="#4ECDC4"/>
-        <circle cx="70" cy="100" r="15" fill="#FFA07A"/>
-        <circle cx="130" cy="100" r="15" fill="#98D8C8"/>
-        <circle cx="70" cy="130" r="15" fill="#F7DC6F"/>
-        <circle cx="130" cy="130" r="15" fill="#BB8FCE"/>
-
-        <!-- Paintbrush -->
-        <g transform="translate(150, 50) rotate(45)">
-          <!-- Brush handle -->
-          <rect x="0" y="0" width="8" height="60" fill="#8B4513" rx="2"/>
-          <!-- Metal ferrule -->
-          <rect x="0" y="55" width="8" height="10" fill="#C0C0C0"/>
-          <!-- Brush bristles -->
-          <path d="M 0 65 L 0 80 L 2 82 L 4 80 L 6 82 L 8 80 L 8 65 Z" fill="#FFB347"/>
-        </g>
-
-        <!-- Paint strokes -->
-        <path d="M 30 170 Q 50 165 70 170" stroke="#FF6B6B" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.8"/>
-        <path d="M 80 175 Q 100 170 120 175" stroke="#4ECDC4" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.8"/>
-        <path d="M 130 170 Q 150 165 170 170" stroke="#F7DC6F" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.8"/>
-      </svg>
-      <h2 class="game-title">🎨 Paint</h2>
-      <p class="game-description">Draw and create colorful masterpieces with brushes, stars, and hearts!</p>
+    <a href="/mini_games/paint.html" class="game-card" style="background: linear-gradient(135deg,#fff9c4,#fff);">
+      <span class="game-emoji">🎨</span>
+      <div class="game-title">Malen</div>
     </a>
 
-    <a href="/mini_games/worm.html" class="game-card">
-      <svg class="game-icon" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-        <!-- Background grass -->
-        <rect x="0" y="160" width="200" height="40" fill="#7CB342"/>
-        <circle cx="20" cy="160" r="10" fill="#7CB342"/>
-        <circle cx="50" cy="160" r="8" fill="#7CB342"/>
-        <circle cx="80" cy="160" r="12" fill="#7CB342"/>
-        <circle cx="120" cy="160" r="9" fill="#7CB342"/>
-        <circle cx="150" cy="160" r="11" fill="#7CB342"/>
-        <circle cx="180" cy="160" r="8" fill="#7CB342"/>
-
-        <!-- Worm body segments -->
-        <circle cx="140" cy="130" r="20" fill="#FF6B6B"/>
-        <circle cx="115" cy="120" r="20" fill="#FFA07A"/>
-        <circle cx="90" cy="110" r="20" fill="#FFD93D"/>
-        <circle cx="65" cy="100" r="20" fill="#6BCB77"/>
-        <circle cx="40" cy="90" r="20" fill="#4D96FF"/>
-
-        <!-- Worm head -->
-        <circle cx="165" cy="140" r="25" fill="#EA348B"/>
-
-        <!-- Eyes -->
-        <circle cx="172" cy="135" r="6" fill="white"/>
-        <circle cx="174" cy="135" r="3" fill="#333"/>
-        <circle cx="172" cy="150" r="6" fill="white"/>
-        <circle cx="174" cy="150" r="3" fill="#333"/>
-
-        <!-- Smile -->
-        <path d="M 160 145 Q 165 152 170 145" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round"/>
-
-        <!-- Antenna -->
-        <line x1="175" y1="120" x2="180" y2="105" stroke="#EA348B" stroke-width="3"/>
-        <line x1="180" y1="120" x2="185" y2="105" stroke="#EA348B" stroke-width="3"/>
-        <circle cx="180" cy="105" r="4" fill="#FFD93D"/>
-        <circle cx="185" cy="105" r="4" fill="#FFD93D"/>
-
-        <!-- Apple (food) -->
-        <circle cx="50" cy="50" r="18" fill="#FF5252"/>
-        <ellipse cx="50" cy="50" rx="18" ry="20" fill="#FF5252"/>
-        <rect x="48" y="30" width="4" height="10" fill="#8D6E63"/>
-        <path d="M 52 32 Q 60 28 62 35" fill="#66BB6A" stroke="none"/>
-      </svg>
-      <h2 class="game-title">🐛 Worm</h2>
-      <p class="game-description">Guide the hungry worm to eat apples and grow longer!</p>
+    <a href="/mini_games/worm.html" class="game-card" style="background: linear-gradient(135deg,#e8f5e9,#fff);">
+      <span class="game-emoji">🐛</span>
+      <div class="game-title">Wurm</div>
     </a>
+
+    <a href="/mini_games/count_apples.html" class="game-card" style="background: linear-gradient(135deg,#fce4ec,#fff);">
+      <span class="game-emoji">🍎</span>
+      <div class="game-title">Äpfel zählen</div>
+    </a>
+
+    <a href="/mini_games/size_sorter.html" class="game-card" style="background: linear-gradient(135deg,#e3f2fd,#fff);">
+      <span class="game-emoji">🐘</span>
+      <div class="game-title">Größen sortieren</div>
+    </a>
+
+    <a href="/mini_games/balance_scale.html" class="game-card" style="background: linear-gradient(135deg,#fff3e0,#fff);">
+      <span class="game-emoji">⚖️</span>
+      <div class="game-title">Waage</div>
+    </a>
+
+    <a href="/mini_games/shape_lotto.html" class="game-card" style="background: linear-gradient(135deg,#f3e5f5,#fff);">
+      <span class="game-emoji">🔷</span>
+      <div class="game-title">Formen Lotto</div>
+    </a>
+
+    <a href="/mini_games/initial_letters.html" class="game-card" style="background: linear-gradient(135deg,#e8eaf6,#fff);">
+      <span class="game-emoji">🔤</span>
+      <div class="game-title">Anfangsbuchstaben</div>
+    </a>
+
+    <a href="/mini_games/word_builder.html" class="game-card" style="background: linear-gradient(135deg,#e0f7fa,#fff);">
+      <span class="game-emoji">📝</span>
+      <div class="game-title">Wörter bauen</div>
+    </a>
+
+    <a href="/mini_games/piano.html" class="game-card" style="background: linear-gradient(135deg,#fafafa,#fff);">
+      <span class="game-emoji">🎹</span>
+      <div class="game-title">Klavier</div>
+    </a>
+
   </div>
 </div>
+
+<script>
+  const spreche = (text) => {
+    window.speechSynthesis.cancel();
+    const t = text || 'Hallo! Wähle ein Spiel aus!';
+    const msg = new SpeechSynthesisUtterance(t);
+    msg.lang = 'de-DE';
+    msg.rate = 0.85;
+    window.speechSynthesis.speak(msg);
+  };
+
+  // Autoplay on desktop; on iPad a user gesture is needed
+  window.addEventListener('load', () => {
+    setTimeout(() => spreche(), 800);
+  });
+</script>
 

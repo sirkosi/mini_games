@@ -1,0 +1,417 @@
+---
+layout: default
+---
+<style>
+  html, body {
+    position: static !important;
+    overflow: auto !important;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: pan-y;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+  .icon-btn {
+    background: rgba(255,255,255,0.55);
+    border: none;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    font-size: 1.6rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .icon-btn:active { background: rgba(255,255,255,0.85); }
+
+  .game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 16px 30px;
+    gap: 14px;
+  }
+
+  .instruction {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #e65100;
+    text-align: center;
+  }
+
+  /* SCALE VISUAL */
+  .scale-wrap {
+    position: relative;
+    width: 280px;
+    height: 80px;
+    flex-shrink: 0;
+  }
+  .arm {
+    position: absolute;
+    width: 240px;
+    height: 10px;
+    background: linear-gradient(#8d6e63, #5d4037);
+    top: 18px;
+    left: 20px;
+    border-radius: 5px;
+    transform-origin: center;
+    transition: transform 0.55s cubic-bezier(0.34,1.3,0.64,1);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+  }
+  .arm::before, .arm::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    width: 3px;
+    height: 30px;
+    background: #8d6e63;
+  }
+  .arm::before { left: 4px; }
+  .arm::after  { right: 4px; }
+  .pivot {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-bottom: 52px solid #6d4c41;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  }
+  .pivot::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translate(-50%,-100%);
+    width: 14px;
+    height: 14px;
+    background: #4e342e;
+    border-radius: 50%;
+  }
+
+  /* PLATES */
+  .plates-row {
+    display: flex;
+    gap: 16px;
+    align-items: stretch;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .plate-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .side-btn {
+    padding: 10px;
+    border-radius: 14px;
+    border: 3px solid transparent;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: all 0.15s;
+    background: white;
+    color: #555;
+  }
+  .side-btn.active-left  { border-color: #ef5350; background: #ffebee; color: #c62828; }
+  .side-btn.active-right { border-color: #42a5f5; background: #e3f2fd; color: #1565c0; }
+
+  .plate {
+    flex: 1;
+    min-height: 80px;
+    background: rgba(255,255,255,0.55);
+    border-radius: 16px;
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-content: flex-start;
+    border: 2px dashed rgba(0,0,0,0.12);
+    transition: background 0.3s;
+  }
+  .plate.balanced { background: #c8e6c9; border-color: #66bb6a; border-style: solid; }
+  #leftPlate  { border-color: #ef9a9a; }
+  #rightPlate { border-color: #90caf9; }
+
+  .sum-label {
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #333;
+  }
+
+  .weight-on-plate {
+    background: #ff8f00;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 1.2rem;
+    font-weight: 800;
+    cursor: pointer;
+    touch-action: manipulation;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  }
+  .weight-on-plate:active { transform: scale(0.92); }
+
+  /* WEIGHT POOL */
+  .pool-wrap {
+    width: 100%;
+    max-width: 480px;
+  }
+  .pool-label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #666;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .pool {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    background: rgba(255,255,255,0.5);
+    border-radius: 16px;
+    padding: 14px;
+  }
+  .weight-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    border: none;
+    background: #ff8f00;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 900;
+    cursor: pointer;
+    touch-action: manipulation;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: transform 0.15s;
+  }
+  .weight-btn:active { transform: scale(0.9); }
+  .weight-btn:disabled { background: #ccc; box-shadow: none; cursor: default; }
+
+  .feedback {
+    font-size: 1.8rem;
+    font-weight: 800;
+    text-align: center;
+    min-height: 48px;
+    color: #e65100;
+  }
+
+  .next-btn {
+    background: #f57c00;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 36px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(245,124,0,0.4);
+    touch-action: manipulation;
+    display: none;
+  }
+
+  @media (min-width: 600px) {
+    .scale-wrap { width: 360px; }
+    .arm { width: 320px; }
+    .instruction { font-size: 1.5rem; }
+    .weight-btn { width: 72px; height: 72px; font-size: 1.8rem; }
+  }
+</style>
+
+<div class="topbar">
+  <a href="/mini_games/" class="icon-btn">🏠</a>
+  <button class="icon-btn" onclick="spreche()">🔊</button>
+</div>
+
+<div class="game-area">
+  <div class="instruction">⚖️ Mache beide Seiten gleich!</div>
+
+  <div class="scale-wrap">
+    <div class="arm" id="arm"></div>
+    <div class="pivot"></div>
+  </div>
+
+  <div class="plates-row">
+    <div class="plate-wrap">
+      <button class="side-btn" id="btnLeft" onclick="setzeSeite('links')">⬅️ Links</button>
+      <div class="plate" id="leftPlate"></div>
+      <div class="sum-label" id="sumLeft">0</div>
+    </div>
+    <div class="plate-wrap">
+      <button class="side-btn" id="btnRight" onclick="setzeSeite('rechts')">Rechts ➡️</button>
+      <div class="plate" id="rightPlate"></div>
+      <div class="sum-label" id="sumRight">0</div>
+    </div>
+  </div>
+
+  <div class="pool-wrap">
+    <div class="pool-label">Gewichte – wähle eine Seite, dann tippe ein Gewicht:</div>
+    <div class="pool" id="pool"></div>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+  <button class="next-btn" id="nextBtn" onclick="neueRunde()">Weiter ▶</button>
+</div>
+
+<script>
+  let aktivSeite = null; // 'links' | 'rechts'
+  let gewichte = [];
+  let linksGewichte = [];
+  let rechtsGewichte = [];
+  let istGeloest = false;
+
+  const spreche = (text) => {
+    window.speechSynthesis.cancel();
+    const msg = new SpeechSynthesisUtterance(text || 'Mache beide Seiten gleich um die Waage auszubalancieren.');
+    msg.lang = 'de-DE';
+    msg.rate = 0.85;
+    window.speechSynthesis.speak(msg);
+  };
+
+  const setzeSeite = (seite) => {
+    aktivSeite = seite;
+    document.getElementById('btnLeft').className  = 'side-btn' + (seite === 'links'  ? ' active-left' : '');
+    document.getElementById('btnRight').className = 'side-btn' + (seite === 'rechts' ? ' active-right' : '');
+  };
+
+  const aktualisiereWaage = () => {
+    const linksSum  = linksGewichte.reduce((a,b) => a+b, 0);
+    const rechtsSum = rechtsGewichte.reduce((a,b) => a+b, 0);
+    document.getElementById('sumLeft').textContent  = linksSum;
+    document.getElementById('sumRight').textContent = rechtsSum;
+
+    const diff = linksSum - rechtsSum;
+    const winkel = Math.max(-30, Math.min(30, diff * 4));
+    document.getElementById('arm').style.transform = `rotate(${winkel}deg)`;
+
+    if (linksSum > 0 && rechtsSum > 0 && linksSum === rechtsSum) {
+      if (!istGeloest) {
+        istGeloest = true;
+        document.getElementById('leftPlate').classList.add('balanced');
+        document.getElementById('rightPlate').classList.add('balanced');
+        document.getElementById('feedback').textContent = '⭐ Perfekt! Die Waage ist ausgeglichen! ⭐';
+        spreche('Super! Die Waage ist perfekt ausgeglichen!');
+        document.getElementById('nextBtn').style.display = 'inline-block';
+      }
+    } else {
+      document.getElementById('leftPlate').classList.remove('balanced');
+      document.getElementById('rightPlate').classList.remove('balanced');
+    }
+  };
+
+  const platteRendern = (seite) => {
+    const arr  = seite === 'links' ? linksGewichte : rechtsGewichte;
+    const pid  = seite === 'links' ? 'leftPlate' : 'rightPlate';
+    const plate = document.getElementById(pid);
+    plate.innerHTML = '';
+    arr.forEach((w, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'weight-on-plate';
+      btn.textContent = w;
+      btn.title = 'Tippe zum Entfernen';
+      btn.onclick = () => {
+        if (istGeloest) return;
+        arr.splice(idx, 1);
+        // re-enable in pool
+        const poolBtns = document.querySelectorAll('#pool button');
+        poolBtns.forEach(pb => {
+          if (parseInt(pb.dataset.wert) === w && pb.disabled) {
+            pb.disabled = false;
+            return;
+          }
+        });
+        platteRendern(seite);
+        aktualisiereWaage();
+      };
+      plate.appendChild(btn);
+    });
+  };
+
+  const gewichtHinzufügen = (wert) => {
+    if (!aktivSeite) {
+      spreche('Wähle zuerst Links oder Rechts!');
+      document.getElementById('feedback').textContent = '👈 Wähle erst eine Seite!';
+      setTimeout(() => { document.getElementById('feedback').textContent = ''; }, 1500);
+      return;
+    }
+    if (istGeloest) return;
+
+    if (aktivSeite === 'links') { linksGewichte.push(wert); platteRendern('links'); }
+    else                        { rechtsGewichte.push(wert); platteRendern('rechts'); }
+
+    aktualisiereWaage();
+  };
+
+  const neueRunde = () => {
+    istGeloest = false;
+    aktivSeite = null;
+    linksGewichte = [];
+    rechtsGewichte = [];
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('btnLeft').className  = 'side-btn';
+    document.getElementById('btnRight').className = 'side-btn';
+    document.getElementById('leftPlate').innerHTML  = '';
+    document.getElementById('rightPlate').innerHTML = '';
+    document.getElementById('leftPlate').classList.remove('balanced');
+    document.getElementById('rightPlate').classList.remove('balanced');
+    document.getElementById('sumLeft').textContent  = '0';
+    document.getElementById('sumRight').textContent = '0';
+    document.getElementById('arm').style.transform = 'rotate(0deg)';
+
+    // Generate a random set that can be balanced (target sum ≤ 10)
+    const ziel = Math.floor(Math.random() * 6) + 3; // 3–8
+    // Build partitions summing to ziel on each side
+    const available = [];
+    // Generate weights: a subset that includes several weights summing to ziel on each side
+    for (let v = 1; v <= Math.min(ziel, 6); v++) available.push(v);
+    // Add at most 2 extra distractors
+    for (let i = 0; i < 2; i++) {
+      const extra = Math.floor(Math.random() * 5) + 1;
+      available.push(extra);
+    }
+    // Shuffle for display
+    gewichte = available.sort(() => Math.random() - 0.5);
+
+    const pool = document.getElementById('pool');
+    pool.innerHTML = '';
+    gewichte.forEach(w => {
+      const btn = document.createElement('button');
+      btn.className = 'weight-btn';
+      btn.textContent = w;
+      btn.dataset.wert = w;
+      btn.onclick = () => gewichtHinzufügen(w);
+      pool.appendChild(btn);
+    });
+
+    spreche(`Mache beide Seiten gleich! Ziel: ${ziel} auf jeder Seite.`);
+  };
+
+  neueRunde();
+</script>

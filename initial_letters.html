@@ -1,0 +1,330 @@
+---
+layout: default
+---
+<style>
+  html, body {
+    position: static !important;
+    overflow: auto !important;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+  .icon-btn {
+    background: rgba(255,255,255,0.55);
+    border: none;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    font-size: 1.6rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .icon-btn:active { background: rgba(255,255,255,0.85); }
+
+  .game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 16px 30px;
+    gap: 28px;
+  }
+
+  .progress {
+    display: flex;
+    gap: 8px;
+  }
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+    transition: background 0.3s;
+  }
+  .dot.done    { background: #7c4dff; }
+  .dot.correct { background: #4caf50; }
+  .dot.wrong   { background: #ef5350; }
+
+  .emoji-display {
+    font-size: 7rem;
+    line-height: 1;
+    text-align: center;
+    animation: pop-in 0.35s ease;
+    filter: drop-shadow(2px 6px 10px rgba(0,0,0,0.15));
+  }
+  @keyframes pop-in {
+    from { transform: scale(0.4); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  .word-label {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #311b92;
+    text-align: center;
+    letter-spacing: 3px;
+  }
+  .word-label .first-letter {
+    font-size: 2.8rem;
+    color: #7c4dff;
+  }
+
+  .letter-row {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .letter-btn {
+    width: 90px;
+    height: 90px;
+    border-radius: 22px;
+    border: none;
+    font-size: 2.8rem;
+    font-weight: 900;
+    cursor: pointer;
+    background: white;
+    color: #333;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    transition: transform 0.15s, background 0.15s;
+    touch-action: manipulation;
+  }
+  .letter-btn:active { transform: scale(0.9); }
+  .letter-btn.correct { background: #66bb6a; color: white; }
+  .letter-btn.wrong   { background: #ef9a9a; color: white; animation: shake 0.4s ease; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+  }
+
+  .feedback {
+    font-size: 2rem;
+    font-weight: 800;
+    text-align: center;
+    min-height: 56px;
+    color: #311b92;
+  }
+
+  .next-btn {
+    background: #7c4dff;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 36px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(124,77,255,0.4);
+    touch-action: manipulation;
+    display: none;
+  }
+
+  .end-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+  }
+  .end-screen.visible { display: flex; }
+  .end-emoji { font-size: 5rem; }
+  .end-text  { font-size: 1.8rem; font-weight: 900; color: #311b92; }
+
+  @media (min-width: 600px) {
+    .emoji-display { font-size: 9rem; }
+    .letter-btn { width: 110px; height: 110px; font-size: 3.4rem; }
+    .word-label { font-size: 2.8rem; }
+  }
+</style>
+
+<div class="topbar">
+  <a href="/mini_games/" class="icon-btn">🏠</a>
+  <button class="icon-btn" onclick="spreche()">🔊</button>
+</div>
+
+<div class="game-area">
+  <div class="progress" id="progress"></div>
+
+  <div id="mainContent">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:24px;">
+      <div class="emoji-display" id="emojiDisplay"></div>
+      <div class="word-label"   id="wordLabel"></div>
+      <div class="letter-row"   id="letterRow"></div>
+      <div class="feedback"     id="feedback"></div>
+      <button class="next-btn"  id="nextBtn" onclick="naechsteRunde()">Weiter ▶</button>
+    </div>
+  </div>
+
+  <div class="end-screen" id="endScreen">
+    <div class="end-emoji">🏆</div>
+    <div class="end-text" id="endText"></div>
+    <button class="next-btn" style="display:inline-block;" onclick="spielNeuStarten()">Nochmal spielen 🔄</button>
+  </div>
+</div>
+
+<script>
+const RUNDEN = [
+  // --- Ursprüngliche Runden ---
+  { emoji: '🍎', wort: 'Apfel',        richtig: 'A', optionen: ['A', 'B', 'K'] },
+  { emoji: '🐱', wort: 'Katze',        richtig: 'K', optionen: ['R', 'K', 'M'] },
+  { emoji: '🍌', wort: 'Banane',       richtig: 'B', optionen: ['T', 'B', 'S'] },
+  { emoji: '🐶', wort: 'Hund',         richtig: 'H', optionen: ['H', 'F', 'L'] },
+  { emoji: '🌙', wort: 'Mond',         richtig: 'M', optionen: ['N', 'T', 'M'] },
+  { emoji: '🐟', wort: 'Fisch',        richtig: 'F', optionen: ['F', 'B', 'P'] },
+  { emoji: '🌸', wort: 'Blume',        richtig: 'B', optionen: ['K', 'B', 'S'] },
+  { emoji: '🦁', wort: 'Löwe',         richtig: 'L', optionen: ['L', 'M', 'N'] },
+  { emoji: '🚂', wort: 'Zug',          richtig: 'Z', optionen: ['S', 'Z', 'T'] },
+  { emoji: '🎈', wort: 'Ballon',       richtig: 'B', optionen: ['P', 'D', 'B'] },
+  // --- Neue Runden ---
+  { emoji: '🐻', wort: 'Bär',          richtig: 'B', optionen: ['P', 'B', 'G'] },
+  { emoji: '🍕', wort: 'Pizza',        richtig: 'P', optionen: ['B', 'P', 'F'] },
+  { emoji: '🌈', wort: 'Regenbogen',   richtig: 'R', optionen: ['R', 'N', 'G'] },
+  { emoji: '🦊', wort: 'Fuchs',        richtig: 'F', optionen: ['V', 'F', 'H'] },
+  { emoji: '🚀', wort: 'Rakete',       richtig: 'R', optionen: ['R', 'L', 'T'] },
+  { emoji: '🍓', wort: 'Erdbeere',     richtig: 'E', optionen: ['A', 'E', 'O'] },
+  { emoji: '🦋', wort: 'Schmetterling',richtig: 'S', optionen: ['S', 'Z', 'K'] },
+  { emoji: '🐸', wort: 'Frosch',       richtig: 'F', optionen: ['F', 'B', 'G'] },
+  { emoji: '🌻', wort: 'Sonnenblume',  richtig: 'S', optionen: ['S', 'B', 'N'] },
+  { emoji: '🍰', wort: 'Kuchen',       richtig: 'K', optionen: ['K', 'G', 'T'] },
+  { emoji: '🚗', wort: 'Auto',         richtig: 'A', optionen: ['A', 'U', 'E'] },
+  { emoji: '🎵', wort: 'Musik',        richtig: 'M', optionen: ['N', 'M', 'L'] },
+  { emoji: '🐝', wort: 'Biene',        richtig: 'B', optionen: ['D', 'B', 'W'] },
+  { emoji: '🍦', wort: 'Eis',          richtig: 'E', optionen: ['I', 'E', 'A'] },
+  { emoji: '🐘', wort: 'Elefant',      richtig: 'E', optionen: ['E', 'A', 'O'] },
+  { emoji: '🎸', wort: 'Gitarre',      richtig: 'G', optionen: ['G', 'J', 'K'] },
+  { emoji: '🍇', wort: 'Trauben',      richtig: 'T', optionen: ['T', 'D', 'B'] },
+  { emoji: '🏠', wort: 'Haus',         richtig: 'H', optionen: ['H', 'K', 'M'] },
+  { emoji: '🐄', wort: 'Kuh',          richtig: 'K', optionen: ['G', 'K', 'H'] },
+  { emoji: '🌺', wort: 'Nelke',        richtig: 'N', optionen: ['N', 'M', 'K'] },
+  { emoji: '🦜', wort: 'Papagei',      richtig: 'P', optionen: ['B', 'P', 'V'] },
+  { emoji: '🍋', wort: 'Zitrone',      richtig: 'Z', optionen: ['Z', 'S', 'C'] },
+  { emoji: '🐭', wort: 'Maus',         richtig: 'M', optionen: ['M', 'N', 'R'] },
+  { emoji: '🌍', wort: 'Welt',         richtig: 'W', optionen: ['W', 'V', 'B'] },
+  { emoji: '🍊', wort: 'Orange',       richtig: 'O', optionen: ['A', 'O', 'E'] },
+  { emoji: '🐧', wort: 'Pinguin',      richtig: 'P', optionen: ['B', 'P', 'K'] },
+  { emoji: '🌴', wort: 'Palme',        richtig: 'P', optionen: ['P', 'B', 'D'] },
+  { emoji: '🎀', wort: 'Schleife',     richtig: 'S', optionen: ['S', 'T', 'Z'] },
+  { emoji: '🐴', wort: 'Pferd',        richtig: 'P', optionen: ['P', 'F', 'B'] },
+  { emoji: '⭐', wort: 'Stern',        richtig: 'S', optionen: ['S', 'T', 'N'] },
+];
+
+let rundeListe = [];
+let aktuell = 0;
+let richtigZähler = 0;
+let beantwortet = false;
+
+const spreche = (text) => {
+  window.speechSynthesis.cancel();
+  if (!text) {
+    const r = rundeListe[aktuell];
+    text = `${r.wort}. Mit welchem Buchstaben beginnt ${r.wort}?`;
+  }
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.lang = 'de-DE';
+  msg.rate = 0.85;
+  window.speechSynthesis.speak(msg);
+};
+
+const fortschrittRendern = () => {
+  const prog = document.getElementById('progress');
+  prog.innerHTML = '';
+  rundeListe.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i < aktuell ? ' done' : '');
+    prog.appendChild(dot);
+  });
+};
+
+const renderRunde = () => {
+  const r = rundeListe[aktuell];
+  beantwortet = false;
+  document.getElementById('emojiDisplay').textContent = r.emoji;
+  document.getElementById('wordLabel').innerHTML =
+    `<span class="first-letter">${r.richtig}</span>${r.wort.slice(1).toLowerCase()}`;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('nextBtn').style.display = 'none';
+
+  const shuffled = [...r.optionen].sort(() => Math.random() - 0.5);
+  const row = document.getElementById('letterRow');
+  row.innerHTML = '';
+  shuffled.forEach(buchstabe => {
+    const btn = document.createElement('button');
+    btn.className = 'letter-btn';
+    btn.textContent = buchstabe;
+    btn.onclick = () => pruefen(buchstabe, btn, r);
+    row.appendChild(btn);
+  });
+
+  fortschrittRendern();
+  setTimeout(spreche, 300);
+};
+
+const pruefen = (buchstabe, btn, runde) => {
+  if (beantwortet) return;
+  beantwortet = true;
+
+  if (buchstabe === runde.richtig) {
+    btn.classList.add('correct');
+    richtigZähler++;
+    document.getElementById('feedback').textContent = '⭐ Richtig!';
+    setTimeout(() => spreche(`Richtig! ${runde.wort} beginnt mit ${runde.richtig}!`), 100);
+    document.getElementById('nextBtn').style.display = 'inline-block';
+  } else {
+    btn.classList.add('wrong');
+    document.getElementById('feedback').textContent = '❌ Nochmal!';
+    setTimeout(() => spreche(`Nein, versuch es nochmal! Womit beginnt ${runde.wort}?`), 100);
+    setTimeout(() => {
+      btn.classList.remove('wrong');
+      beantwortet = false;
+    }, 800);
+  }
+};
+
+const naechsteRunde = () => {
+  aktuell++;
+  if (aktuell >= rundeListe.length) {
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('endScreen').classList.add('visible');
+    document.getElementById('endText').textContent =
+      `Du hattest ${richtigZähler} von ${rundeListe.length} richtig! 🎉`;
+    spreche(`Toll! Du hast ${richtigZähler} von ${rundeListe.length} Buchstaben richtig erraten!`);
+  } else {
+    renderRunde();
+  }
+};
+
+const spielNeuStarten = () => {
+  document.getElementById('endScreen').classList.remove('visible');
+  document.getElementById('mainContent').style.display = '';
+  spielStarten();
+};
+
+const spielStarten = () => {
+  rundeListe = [...RUNDEN].sort(() => Math.random() - 0.5).slice(0, 8);
+  aktuell = 0;
+  richtigZähler = 0;
+  renderRunde();
+};
+
+spielStarten();
+</script>
