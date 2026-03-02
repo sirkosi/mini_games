@@ -132,6 +132,20 @@ layout: default
     .game-title { font-size: 1.15rem; margin-top: 10px; }
   }
 
+  .section-header {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: white;
+    text-shadow: 1px 2px 4px rgba(0,0,0,0.25);
+    letter-spacing: 1px;
+    margin: 18px 0 4px 4px;
+  }
+
+  /* Tablet */
+  @media (min-width: 600px) {
+    .section-header { font-size: 1.7rem; margin-top: 24px; }
+  }
+
   /* Desktop */
   @media (min-width: 1024px) {
     body { padding: 24px; }
@@ -157,46 +171,33 @@ layout: default
 
     .game-emoji { font-size: 6rem; }
     .game-title { font-size: 1.25rem; margin-top: 12px; }
+    .section-header { font-size: 1.9rem; margin-top: 28px; }
   }
 </style>
 
 <div class="container">
   <div class="header">
-    <span class="header-emoji">🎮</span>
-    <h1>Spiele</h1>
+    <span class="header-emoji">🌟</span>
+    <h1>Spielplatz</h1>
     <button class="audio-btn" onclick="spreche()" title="Vorlesen">🔊</button>
   </div>
 
+  <div class="section-header">📚 Lernen</div>
   <div class="games-grid">
 
-    <a href="/mini_games/paint.html" class="game-card" style="background: linear-gradient(135deg,#fff9c4,#fff);">
-      <span class="game-emoji">🎨</span>
-      <div class="game-title">Malen</div>
-    </a>
-
-    <a href="/mini_games/worm.html" class="game-card" style="background: linear-gradient(135deg,#e8f5e9,#fff);">
-      <span class="game-emoji">🐛</span>
-      <div class="game-title">Wurm</div>
-    </a>
-
-    <a href="/mini_games/count_apples.html" class="game-card" style="background: linear-gradient(135deg,#fce4ec,#fff);">
+    <a href="/mini_games/count_things.html" class="game-card" style="background: linear-gradient(135deg,#fce4ec,#fff);">
       <span class="game-emoji">🍎</span>
-      <div class="game-title">Äpfel zählen</div>
+      <div class="game-title">Zählen</div>
     </a>
 
-    <a href="/mini_games/size_sorter.html" class="game-card" style="background: linear-gradient(135deg,#e3f2fd,#fff);">
-      <span class="game-emoji">🐘</span>
-      <div class="game-title">Größen sortieren</div>
+    <a href="/mini_games/math_sum.html" class="game-card" style="background: linear-gradient(135deg,#e8f5e9,#fff);">
+      <span class="game-emoji">➕</span>
+      <div class="game-title">Rechnen</div>
     </a>
 
-    <a href="/mini_games/balance_scale.html" class="game-card" style="background: linear-gradient(135deg,#fff3e0,#fff);">
-      <span class="game-emoji">⚖️</span>
-      <div class="game-title">Waage</div>
-    </a>
-
-    <a href="/mini_games/shape_lotto.html" class="game-card" style="background: linear-gradient(135deg,#f3e5f5,#fff);">
-      <span class="game-emoji">🔷</span>
-      <div class="game-title">Formen Lotto</div>
+    <a href="/mini_games/logic_tasks.html" class="game-card" style="background: linear-gradient(135deg,#f3e5f5,#fff);">
+      <span class="game-emoji">🧩</span>
+      <div class="game-title">Logik-Aufgaben</div>
     </a>
 
     <a href="/mini_games/initial_letters.html" class="game-card" style="background: linear-gradient(135deg,#e8eaf6,#fff);">
@@ -207,6 +208,21 @@ layout: default
     <a href="/mini_games/word_builder.html" class="game-card" style="background: linear-gradient(135deg,#e0f7fa,#fff);">
       <span class="game-emoji">📝</span>
       <div class="game-title">Wörter bauen</div>
+    </a>
+
+  </div>
+
+  <div class="section-header">🎮 Spiele</div>
+  <div class="games-grid">
+
+    <a href="/mini_games/paint.html" class="game-card" style="background: linear-gradient(135deg,#fff9c4,#fff);">
+      <span class="game-emoji">🎨</span>
+      <div class="game-title">Malen</div>
+    </a>
+
+    <a href="/mini_games/worm.html" class="game-card" style="background: linear-gradient(135deg,#e8f5e9,#fff);">
+      <span class="game-emoji">🐛</span>
+      <div class="game-title">Wurm</div>
     </a>
 
     <a href="/mini_games/piano.html" class="game-card" style="background: linear-gradient(135deg,#fafafa,#fff);">
@@ -220,7 +236,7 @@ layout: default
 <script>
   const spreche = (text) => {
     window.speechSynthesis.cancel();
-    const t = text || 'Hallo! Wähle ein Spiel aus!';
+    const t = text || 'Hallo! Wähle Lernen oder Spiele aus!';
     const msg = new SpeechSynthesisUtterance(t);
     msg.lang = 'de-DE';
     msg.rate = 0.85;

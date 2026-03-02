@@ -1,0 +1,379 @@
+---
+layout: default
+---
+<style>
+  html, body {
+    position: static !important;
+    overflow: auto !important;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #e8f5e9 0%, #b2dfdb 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+
+  .icon-btn {
+    background: rgba(255,255,255,0.55);
+    border: none;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    font-size: 1.6rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .icon-btn:active { background: rgba(255,255,255,0.85); }
+
+  .game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 16px 30px;
+    gap: 28px;
+  }
+
+  /* ── Visual dots helper ── */
+  .dots-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .dot-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    justify-content: center;
+    max-width: 180px;
+  }
+
+  .dot {
+    font-size: 2rem;
+    line-height: 1;
+    animation: pop-in 0.25s ease backwards;
+  }
+
+  .dots-plus {
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: #2e7d32;
+  }
+
+  @keyframes pop-in {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  /* ── Term display ── */
+  .term-box {
+    background: rgba(255,255,255,0.75);
+    border-radius: 28px;
+    padding: 20px 36px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+  }
+
+  .term-num {
+    font-size: 3.6rem;
+    font-weight: 900;
+    color: #1b5e20;
+    line-height: 1;
+  }
+
+  .term-op {
+    font-size: 3rem;
+    font-weight: 900;
+    color: #388e3c;
+    line-height: 1;
+  }
+
+  .term-q {
+    font-size: 3.6rem;
+    font-weight: 900;
+    color: #a5d6a7;
+    line-height: 1;
+    min-width: 56px;
+    text-align: center;
+  }
+  .term-q.revealed {
+    color: #2e7d32;
+    animation: pop-in 0.3s ease;
+  }
+
+  /* ── Answer buttons ── */
+  .answer-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .ans-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: none;
+    font-size: 2rem;
+    font-weight: 900;
+    cursor: pointer;
+    background: white;
+    color: #333;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.14);
+    transition: transform 0.15s, background 0.15s;
+    touch-action: manipulation;
+  }
+  .ans-btn:active { transform: scale(0.9); }
+  .ans-btn.correct { background: #66bb6a; color: white; }
+  .ans-btn.wrong   { background: #ef9a9a; color: white; animation: shake 0.4s ease; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25%     { transform: translateX(-8px); }
+    75%     { transform: translateX(8px); }
+  }
+
+  /* ── Feedback ── */
+  .feedback {
+    font-size: 2.8rem;
+    text-align: center;
+    min-height: 56px;
+    animation: pop-in 0.3s ease;
+  }
+
+  /* ── Score bar ── */
+  .score-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: rgba(0,0,0,0.5);
+  }
+  .score-star { font-size: 1.4rem; }
+
+  .next-btn {
+    background: #2e7d32;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 16px 40px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(46,125,50,0.4);
+    touch-action: manipulation;
+    display: none;
+  }
+  .next-btn:active { transform: scale(0.96); }
+
+  @media (min-width: 600px) {
+    .ans-btn    { width: 96px; height: 96px; font-size: 2.4rem; }
+    .term-num   { font-size: 4.8rem; }
+    .term-op    { font-size: 4rem; }
+    .term-q     { font-size: 4.8rem; min-width: 70px; }
+    .dot        { font-size: 2.4rem; }
+  }
+</style>
+
+<div class="topbar">
+  <a href="/mini_games/" class="icon-btn" title="Zurück">🏠</a>
+  <button class="icon-btn" onclick="spreche()" title="Vorlesen">🔊</button>
+</div>
+
+<div class="game-area">
+  <div class="score-bar">
+    <span class="score-star">⭐</span>
+    <span id="scoreText">0 richtig</span>
+  </div>
+
+  <!-- Visual dot helper -->
+  <div class="dots-row" id="dotsRow"></div>
+
+  <!-- Equation term: a + b = ? -->
+  <div class="term-box">
+    <span class="term-num" id="termA"></span>
+    <span class="term-op">+</span>
+    <span class="term-num" id="termB"></span>
+    <span class="term-op">=</span>
+    <span class="term-q" id="termQ">?</span>
+  </div>
+
+  <div class="answer-row" id="answerRow"></div>
+  <div class="feedback" id="feedback"></div>
+  <button class="next-btn" id="nextBtn" onclick="neueRunde()">Weiter ▶</button>
+</div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────
+  let a = 0, b = 0, richtig = 0;
+  let beantwortet = false;
+  let audioCtx = null;
+
+  const DOT_EMOJIS = ['🔴','🔵','🟡','🟢','🟠'];
+
+  // ── Audio ──────────────────────────────────────────────────
+  const getAudioCtx = () => {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  };
+
+  const spieleChime = () => {
+    const ctx = getAudioCtx();
+    [523, 659, 784, 1047].forEach((freq, i) => {
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = freq; osc.type = 'sine';
+      const t = ctx.currentTime + i * 0.18;
+      gain.gain.setValueAtTime(0.28, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+      osc.start(t); osc.stop(t + 0.55);
+    });
+  };
+
+  const spieleFehler = () => {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 200; osc.type = 'sawtooth';
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.45);
+  };
+
+  const spreche = (text) => {
+    window.speechSynthesis.cancel();
+    const msg = new SpeechSynthesisUtterance(text || `Wie viel ist ${a} plus ${b}?`);
+    msg.lang = 'de-DE'; msg.rate = 0.85;
+    window.speechSynthesis.speak(msg);
+  };
+
+  // ── Helpers ────────────────────────────────────────────────
+  const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+
+  const buildDots = () => {
+    const row = document.getElementById('dotsRow');
+    row.innerHTML = '';
+    // Pick two distinct dot emojis
+    const [emojiA, emojiB] = shuffle(DOT_EMOJIS);
+
+    const groupA = document.createElement('div');
+    groupA.className = 'dot-group';
+    for (let i = 0; i < a; i++) {
+      const d = document.createElement('span');
+      d.className = 'dot';
+      d.textContent = emojiA;
+      d.style.animationDelay = `${i * 0.05}s`;
+      groupA.appendChild(d);
+    }
+
+    const plus = document.createElement('span');
+    plus.className = 'dots-plus';
+    plus.textContent = '+';
+
+    const groupB = document.createElement('div');
+    groupB.className = 'dot-group';
+    for (let i = 0; i < b; i++) {
+      const d = document.createElement('span');
+      d.className = 'dot';
+      d.textContent = emojiB;
+      d.style.animationDelay = `${(a + i) * 0.05}s`;
+      groupB.appendChild(d);
+    }
+
+    row.appendChild(groupA);
+    row.appendChild(plus);
+    row.appendChild(groupB);
+  };
+
+  // ── New round ──────────────────────────────────────────────
+  const neueRunde = () => {
+    beantwortet = false;
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('nextBtn').style.display = 'none';
+
+    // Pick a, b with a + b <= 10
+    a = Math.ceil(Math.random() * 9);               // 1 – 9
+    b = Math.ceil(Math.random() * (10 - a));        // 1 – (10 - a)
+    const summe = a + b;
+
+    document.getElementById('termA').textContent = a;
+    document.getElementById('termB').textContent = b;
+    const qEl = document.getElementById('termQ');
+    qEl.textContent = '?';
+    qEl.className = 'term-q';
+
+    buildDots();
+
+    // Build answer options: correct + up to 4 distractors, range 1–10
+    const opts = new Set([summe]);
+    const candidates = [];
+    for (let n = 1; n <= 10; n++) if (n !== summe) candidates.push(n);
+    shuffle(candidates).slice(0, 4).forEach(n => opts.add(n));
+    const shuffled = shuffle([...opts]);
+
+    const row = document.getElementById('answerRow');
+    row.innerHTML = '';
+    shuffled.forEach(n => {
+      const btn = document.createElement('button');
+      btn.className = 'ans-btn';
+      btn.textContent = n;
+      btn.onclick = () => pruefeAntwort(n, btn);
+      row.appendChild(btn);
+    });
+
+    spreche();
+  };
+
+  // ── Check answer ───────────────────────────────────────────
+  const pruefeAntwort = (zahl, btn) => {
+    if (beantwortet) return;
+    beantwortet = true;
+    getAudioCtx();
+
+    const summe = a + b;
+    if (zahl === summe) {
+      btn.classList.add('correct');
+      const qEl = document.getElementById('termQ');
+      qEl.textContent = summe;
+      qEl.className = 'term-q revealed';
+      richtig++;
+      document.getElementById('scoreText').textContent = `${richtig} richtig`;
+      document.getElementById('feedback').textContent = '⭐ Richtig! Sehr gut! ⭐';
+      spieleChime();
+      setTimeout(() => spreche(`Richtig! ${a} plus ${b} ist ${summe}. Super gemacht!`), 200);
+      document.getElementById('nextBtn').style.display = 'inline-block';
+    } else {
+      btn.classList.add('wrong');
+      document.getElementById('feedback').textContent = '❌ Versuch es nochmal!';
+      spieleFehler();
+      setTimeout(() => spreche('Versuch es nochmal! Zähle die Punkte.'), 200);
+      setTimeout(() => {
+        btn.classList.remove('wrong');
+        beantwortet = false;
+        document.getElementById('feedback').textContent = '';
+      }, 900);
+    }
+  };
+
+  neueRunde();
+</script>

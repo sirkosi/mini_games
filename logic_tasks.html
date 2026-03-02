@@ -1,0 +1,926 @@
+---
+layout: default
+---
+<style>
+  html, body {
+    position: static !important;
+    overflow: auto !important;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 60%, #b3e5fc 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+  .icon-btn {
+    background: rgba(255,255,255,0.55);
+    border: none;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    font-size: 1.6rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .icon-btn:active { background: rgba(255,255,255,0.85); }
+
+  .game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 16px 30px;
+    gap: 18px;
+  }
+
+  /* Mode Badge */
+  .mode-badge {
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 5px 16px;
+    border-radius: 50px;
+    color: white;
+    background: rgba(0,0,0,0.22);
+  }
+
+  .instruction {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #283593;
+    text-align: center;
+    text-shadow: 0 1px 3px rgba(255,255,255,0.6);
+  }
+
+  /* Feedback */
+  .feedback {
+    font-size: 1.8rem;
+    font-weight: 800;
+    text-align: center;
+    min-height: 48px;
+    color: #283593;
+  }
+
+  .next-btn {
+    background: #5c6bc0;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 36px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(92,107,192,0.45);
+    touch-action: manipulation;
+    display: none;
+  }
+  .next-btn:active { transform: scale(0.96); }
+
+  /* ───── SHAPES task ───── */
+  .holes-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .hole-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .hole {
+    width: 88px;
+    height: 88px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .hole svg.outline {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0; left: 0;
+    pointer-events: none;
+  }
+  .hole.correct svg.outline { filter: drop-shadow(0 0 8px #4caf50); }
+  .hole.wrong { animation: shake 0.4s ease; }
+  .hole-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #3949ab;
+  }
+  .pieces-row {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 22px;
+    max-width: 380px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .piece {
+    cursor: grab;
+    touch-action: none;
+    font-size: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+  }
+  .piece:active { cursor: grabbing; }
+  .piece.placed { opacity: 0.2; pointer-events: none; }
+
+  /* ───── SIZES task ───── */
+  .pool {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 22px;
+    min-height: 100px;
+    background: rgba(255,255,255,0.45);
+    border-radius: 22px;
+    padding: 14px 22px;
+    width: 100%;
+    max-width: 440px;
+    box-sizing: border-box;
+  }
+  .size-item {
+    cursor: grab;
+    touch-action: none;
+    line-height: 1;
+    display: block;
+    transition: opacity 0.2s;
+  }
+  .size-item:active { cursor: grabbing; }
+  .target-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: flex-end;
+  }
+  .slot-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .slot-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #455a64;
+  }
+  .slot {
+    width: 88px;
+    height: 88px;
+    border: 3px dashed #9fa8da;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .slot.over        { background: rgba(159,168,218,0.4); border-color: #3f51b5; }
+  .slot.correct-slot { background: #c8e6c9; border-color: #66bb6a; }
+  .slot.wrong-slot   { background: #ffcdd2; border-color: #ef9a9a; }
+
+  /* ───── ODD ONE OUT task ───── */
+  .odd-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 110px);
+    grid-template-rows: repeat(2, 110px);
+    gap: 14px;
+    justify-content: center;
+  }
+  .odd-btn {
+    width: 110px;
+    height: 110px;
+    border-radius: 22px;
+    border: 4px solid transparent;
+    background: rgba(255,255,255,0.75);
+    font-size: 3.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.13);
+    transition: transform 0.15s, background 0.2s;
+    touch-action: manipulation;
+  }
+  .odd-btn:active { transform: scale(0.92); }
+  .odd-btn.correct { background: #c8e6c9; border-color: #4caf50; }
+  .odd-btn.wrong   { background: #ffcdd2; border-color: #ef9a9a; animation: shake 0.4s ease; }
+
+  /* ───── SEQUENCE task ───── */
+  .sequence-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 14px 16px;
+    background: rgba(255,255,255,0.45);
+    border-radius: 20px;
+    max-width: 420px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .seq-item {
+    font-size: 2.4rem;
+    line-height: 1;
+  }
+  .seq-question {
+    font-size: 2.6rem;
+    line-height: 1;
+    width: 52px;
+    height: 52px;
+    background: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    font-weight: 900;
+    color: #999;
+  }
+  .seq-options {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+  }
+  .seq-btn {
+    width: 88px;
+    height: 88px;
+    border-radius: 18px;
+    border: 3px solid transparent;
+    background: rgba(255,255,255,0.8);
+    font-size: 2.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.13);
+    transition: transform 0.15s;
+    touch-action: manipulation;
+  }
+  .seq-btn:active { transform: scale(0.92); }
+  .seq-btn.correct { background: #c8e6c9; border-color: #4caf50; }
+  .seq-btn.wrong   { background: #ffcdd2; border-color: #ef9a9a; animation: shake 0.4s ease; }
+
+  /* ───── WHICH IS BIGGER task ───── */
+  .compare-row {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    align-items: center;
+  }
+  .compare-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.7);
+    border: 4px solid transparent;
+    border-radius: 22px;
+    padding: 16px 20px;
+    cursor: pointer;
+    font-size: 4rem;
+    line-height: 1;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+    transition: transform 0.15s;
+    touch-action: manipulation;
+  }
+  .compare-btn:active { transform: scale(0.93); }
+  .compare-btn .compare-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #37474f;
+  }
+  .compare-btn.correct { background: #c8e6c9; border-color: #4caf50; }
+  .compare-btn.wrong   { background: #ffcdd2; border-color: #ef9a9a; animation: shake 0.4s ease; }
+
+  /* ───── SHARED ───── */
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+  @keyframes pop-in {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  @media (min-width: 600px) {
+    .hole { width: 106px; height: 106px; }
+    .slot { width: 106px; height: 106px; }
+    .odd-btn { width: 130px; height: 130px; font-size: 4rem; }
+    .odd-grid { grid-template-columns: repeat(2, 130px); grid-template-rows: repeat(2, 130px); }
+    .instruction { font-size: 1.6rem; }
+  }
+</style>
+
+<div class="topbar">
+  <a href="/mini_games/" class="icon-btn" title="Zurück">🏠</a>
+  <button class="icon-btn" onclick="spreche()" title="Vorlesen">🔊</button>
+</div>
+
+<div class="game-area">
+  <div class="mode-badge" id="modeBadge">…</div>
+  <div class="instruction" id="instruction"></div>
+  <div id="taskArea"></div>
+  <div class="feedback" id="feedback"></div>
+  <button class="next-btn" id="nextBtn" onclick="neueRunde()">Weiter ▶</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  AUDIO
+// ═══════════════════════════════════════════════
+let audioCtx = null;
+const getAudioCtx = () => {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+};
+const spieleChime = () => {
+  const ctx = getAudioCtx();
+  [523, 659, 784, 1047].forEach((freq, i) => {
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = freq; osc.type = 'sine';
+    const t = ctx.currentTime + i * 0.18;
+    gain.gain.setValueAtTime(0.28, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    osc.start(t); osc.stop(t + 0.55);
+  });
+};
+const spieleFehler = () => {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator(), gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.frequency.value = 200; osc.type = 'sawtooth';
+  gain.gain.setValueAtTime(0.2, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+  osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.45);
+};
+const spreche = (text) => {
+  window.speechSynthesis.cancel();
+  const msg = new SpeechSynthesisUtterance(text || currentSpeechHint);
+  msg.lang = 'de-DE'; msg.rate = 0.85;
+  window.speechSynthesis.speak(msg);
+};
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let beantwortet = false;
+let currentSpeechHint = 'Schau genau hin!';
+// drag state shared between tasks
+let dragClone = null, dragEl = null, dragOriginParent = null, dragOriginNext = null;
+
+const MODES = ['SHAPES', 'SHAPES', 'SIZES', 'SIZES', 'ODD_ONE_OUT', 'ODD_ONE_OUT', 'SEQUENCE', 'SEQUENCE', 'WHICH_BIGGER'];
+const MODE_LABELS = {
+  SHAPES:      ['🔷 Formen zuordnen',  '#7e57c2'],
+  SIZES:       ['📏 Größen sortieren', '#2196f3'],
+  ODD_ONE_OUT: ['🔍 Was passt nicht?', '#e91e63'],
+  SEQUENCE:    ['🔮 Was kommt als nächstes?', '#ff7043'],
+  WHICH_BIGGER:['📐 Was ist größer?',  '#4caf50'],
+};
+
+// ═══════════════════════════════════════════════
+//  SHAPES DATA
+// ═══════════════════════════════════════════════
+const ALL_SHAPES = [
+  {
+    id: 'kreis', label: 'Kreis', color: '#e91e63',
+    outline: (sz) => `<svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}"><circle cx="45" cy="45" r="38" fill="none" stroke="#e91e63" stroke-width="5" stroke-dasharray="8 4"/></svg>`,
+    filled:  (sz) => `<svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}"><circle cx="45" cy="45" r="38" fill="#e91e63"/></svg>`,
+  },
+  {
+    id: 'quadrat', label: 'Quadrat', color: '#2196f3',
+    outline: (sz) => `<svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}"><rect x="8" y="8" width="74" height="74" rx="6" fill="none" stroke="#2196f3" stroke-width="5" stroke-dasharray="8 4"/></svg>`,
+    filled:  (sz) => `<svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}"><rect x="8" y="8" width="74" height="74" rx="6" fill="#2196f3"/></svg>`,
+  },
+  {
+    id: 'dreieck', label: 'Dreieck', color: '#ff9800',
+    outline: (sz) => `<svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}"><polygon points="45,6 82,80 8,80" fill="none" stroke="#ff9800" stroke-width="5" stroke-dasharray="8 4" stroke-linejoin="round"/></svg>`,
+    filled:  (sz) => `<svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}"><polygon points="45,6 82,80 8,80" fill="#ff9800" stroke-linejoin="round"/></svg>`,
+  },
+  {
+    id: 'stern', label: 'Stern', color: '#fdd835',
+    outline: (sz) => `<svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}"><polygon points="45,5 56,34 87,34 63,53 72,82 45,63 18,82 27,53 3,34 34,34" fill="none" stroke="#f9a825" stroke-width="5" stroke-dasharray="7 4" stroke-linejoin="round"/></svg>`,
+    filled:  (sz) => `<svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}"><polygon points="45,5 56,34 87,34 63,53 72,82 45,63 18,82 27,53 3,34 34,34" fill="#fdd835" stroke-linejoin="round"/></svg>`,
+  },
+  {
+    id: 'herz', label: 'Herz', color: '#f44336',
+    outline: (sz) => `<svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}"><path d="M45 75 C20 55 5 42 5 27 C5 16 13 8 23 8 C32 8 40 14 45 20 C50 14 58 8 67 8 C77 8 85 16 85 27 C85 42 70 55 45 75Z" fill="none" stroke="#f44336" stroke-width="5" stroke-dasharray="8 4"/></svg>`,
+    filled:  (sz) => `<svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}"><path d="M45 75 C20 55 5 42 5 27 C5 16 13 8 23 8 C32 8 40 14 45 20 C50 14 58 8 67 8 C77 8 85 16 85 27 C85 42 70 55 45 75Z" fill="#f44336"/></svg>`,
+  },
+];
+
+// ═══════════════════════════════════════════════
+//  SIZES DATA
+// ═══════════════════════════════════════════════
+const SIZE_EMOJI_SETS = [
+  { emoji: '🐘', name: 'Elefant' },
+  { emoji: '🐶', name: 'Hund' },
+  { emoji: '🌸', name: 'Blüte' },
+  { emoji: '⭐', name: 'Stern' },
+  { emoji: '🏠', name: 'Haus' },
+  { emoji: '🍎', name: 'Apfel' },
+  { emoji: '🐱', name: 'Katze' },
+  { emoji: '🌻', name: 'Sonnenblume' },
+  { emoji: '🐙', name: 'Oktopus' },
+  { emoji: '🦕', name: 'Dinosaurier' },
+];
+
+// ═══════════════════════════════════════════════
+//  ODD ONE OUT DATA
+// ═══════════════════════════════════════════════
+const ODD_CATEGORIES = [
+  { name: 'Früchte',    items: ['🍎','🍊','🍋','🍇','🍓','🍌','🍒','🍑','🍉','🫐'] },
+  { name: 'Tiere',      items: ['🐱','🐶','🐰','🐸','🐮','🐧','🦊','🐻','🐼','🐨'] },
+  { name: 'Fahrzeuge',  items: ['🚗','🚂','✈️','🚲','🚌','🚀','🚁','🏎️','🚜','⛵'] },
+  { name: 'Kleidung',   items: ['👕','👖','🎩','👗','👟','👒','🧣','🧤','👔','🧦'] },
+  { name: 'Essen',      items: ['🍕','🍔','🌮','🍜','🍣','🥪','🥗','🍰','🥞','🍩'] },
+  { name: 'Blumen',     items: ['🌹','🌺','🌻','🌷','🌼','🌸','💐','🪷','🏵️','🌝'] },
+  { name: 'Sport',      items: ['⚽','🏀','🎾','🏐','⚾','🏈','🥎','🏓','🏸','🎱'] },
+  { name: 'Werkzeug',   items: ['🔨','🪛','🔧','🪚','⚙️','🔩','🪝','🪜','🔑','🪣'] },
+  { name: 'Möbel',      items: ['🛋️','🪑','🛏️','🚪','🪞','🛁','🚽','🪟','🖼️','🪣'] },
+  { name: 'Naturkräfte',items: ['☀️','🌧️','⛄','🌈','🌪️','⛅','🌩️','🌨️','🌤️','🌬️'] },
+];
+
+// ═══════════════════════════════════════════════
+//  SEQUENCE DATA
+// ═══════════════════════════════════════════════
+const SEQ_ELEMENTS = ['🔴','🔵','🟡','🟢','🟠','🟣','🔶','🔷'];
+
+// ═══════════════════════════════════════════════
+//  WHICH IS BIGGER DATA
+// ═══════════════════════════════════════════════
+const COMPARE_PAIRS = [
+  { a: '🐘', aLabel: 'Elefant', b: '🐭', bLabel: 'Maus',       bigger: 'a' },
+  { a: '🌳', aLabel: 'Baum',    b: '🌱', bLabel: 'Pflanze',    bigger: 'a' },
+  { a: '🚌', aLabel: 'Bus',     b: '🚲', bLabel: 'Fahrrad',    bigger: 'a' },
+  { a: '🌊', aLabel: 'Welle',   b: '💧', bLabel: 'Tropfen',    bigger: 'a' },
+  { a: '🦁', aLabel: 'Löwe',    b: '🐝', bLabel: 'Biene',      bigger: 'a' },
+  { a: '🏠', aLabel: 'Haus',    b: '🐜', bLabel: 'Ameise',     bigger: 'a' },
+  { a: '🚀', aLabel: 'Rakete',  b: '🦋', bLabel: 'Schmetterling', bigger: 'a' },
+  { a: '🐋', aLabel: 'Wal',     b: '🐟', bLabel: 'Fisch',      bigger: 'a' },
+  { a: '🦒', aLabel: 'Giraffe', b: '🐇', bLabel: 'Hase',       bigger: 'a' },
+  { a: '🌍', aLabel: 'Erde',    b: '⚽', bLabel: 'Ball',        bigger: 'a' },
+  { a: '🏔️', aLabel: 'Berg',   b: '🪨', bLabel: 'Stein',      bigger: 'a' },
+  { a: '✈️', aLabel: 'Flugzeug',b: '🐦', bLabel: 'Vogel',      bigger: 'a' },
+];
+
+// ═══════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════
+const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+const pick = (arr, n) => shuffle(arr).slice(0, n);
+
+// ═══════════════════════════════════════════════
+//  DRAG HELPER (shared)
+// ═══════════════════════════════════════════════
+const makeDraggable = (el, cloneHTML, onDrop) => {
+  el.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    getAudioCtx();
+    dragEl = el;
+    dragOriginParent = el.parentElement;
+    dragOriginNext   = el.nextSibling;
+    dragClone = document.createElement('div');
+    dragClone.innerHTML = cloneHTML;
+    dragClone.style.cssText = 'position:fixed;z-index:999;pointer-events:none;opacity:0.85;transform:scale(1.12);transition:none;';
+    positionDragClone(e);
+    document.body.appendChild(dragClone);
+    el.style.opacity = '0.25';
+    el.setPointerCapture(e.pointerId);
+  });
+  el.addEventListener('pointermove', (e) => { e.preventDefault(); positionDragClone(e); });
+  el.addEventListener('pointerup', (e) => {
+    e.preventDefault();
+    if (!dragClone) return;
+    document.body.removeChild(dragClone); dragClone = null;
+    el.style.opacity = '1';
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    onDrop(el, target);
+    dragEl = null;
+  });
+  el.addEventListener('pointercancel', () => {
+    if (dragClone) { document.body.removeChild(dragClone); dragClone = null; }
+    if (dragEl) { dragEl.style.opacity = '1'; dragEl = null; }
+  });
+};
+const positionDragClone = (e) => {
+  if (!dragClone) return;
+  dragClone.style.left = (e.clientX - 42) + 'px';
+  dragClone.style.top  = (e.clientY - 42) + 'px';
+};
+
+// ═══════════════════════════════════════════════
+//  TASK: SHAPES
+// ═══════════════════════════════════════════════
+const renderShapes = () => {
+  const chosen = pick(ALL_SHAPES, 3);
+  let placedCount = 0;
+
+  const ta = document.getElementById('taskArea');
+  ta.innerHTML = '';
+
+  const holesRow = document.createElement('div');
+  holesRow.className = 'holes-row';
+  chosen.forEach(s => {
+    const wrap = document.createElement('div');
+    wrap.className = 'hole-wrap';
+    const hole = document.createElement('div');
+    hole.className = 'hole';
+    hole.id = 'hole-' + s.id;
+    hole.dataset.shape = s.id;
+    hole.innerHTML = `<svg class="outline" viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">${
+      s.outline(90).replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '')
+    }</svg>`;
+    const lbl = document.createElement('div');
+    lbl.className = 'hole-label';
+    lbl.textContent = s.label;
+    wrap.appendChild(hole);
+    wrap.appendChild(lbl);
+    holesRow.appendChild(wrap);
+  });
+
+  const piecesRow = document.createElement('div');
+  piecesRow.className = 'pieces-row';
+  shuffle(chosen).forEach(s => {
+    const piece = document.createElement('div');
+    piece.className = 'piece';
+    piece.id = 'piece-' + s.id;
+    piece.dataset.shape = s.id;
+    piece.innerHTML = s.filled(72);
+    makeDraggable(piece, s.filled(80), (el, target) => {
+      const hole = target?.closest('.hole');
+      if (hole) {
+        if (hole.dataset.shape === el.dataset.shape) {
+          const sh = ALL_SHAPES.find(x => x.id === el.dataset.shape);
+          hole.innerHTML = sh.filled(80);
+          hole.classList.add('correct');
+          el.classList.add('placed');
+          placedCount++;
+          if (placedCount === chosen.length) {
+            setTimeout(() => {
+              document.getElementById('feedback').textContent = '⭐ Alle Formen passen! Toll! ⭐';
+              spieleChime();
+              spreche('Wunderbar! Alle Formen passen perfekt! Super gemacht!');
+              document.getElementById('nextBtn').style.display = 'inline-block';
+              beantwortet = true;
+            }, 200);
+          }
+        } else {
+          hole.classList.add('wrong');
+          setTimeout(() => hole.classList.remove('wrong'), 450);
+          spieleFehler();
+          spreche('Das ist nicht die richtige Form. Versuch es nochmal!');
+        }
+      }
+    });
+    piecesRow.appendChild(piece);
+  });
+
+  ta.appendChild(holesRow);
+  ta.appendChild(piecesRow);
+  currentSpeechHint = 'Bringe jede Form zu ihrem richtigen Platz!';
+};
+
+// ═══════════════════════════════════════════════
+//  TASK: SIZES
+// ═══════════════════════════════════════════════
+const SIZES_CONFIG = [
+  { label: '1️⃣ Klein',  fs: '2.6rem',  idx: 0 },
+  { label: '2️⃣ Mittel', fs: '4.4rem',  idx: 1 },
+  { label: '3️⃣ Groß',   fs: '6.6rem',  idx: 2 },
+];
+
+const renderSizes = () => {
+  const set = SIZE_EMOJI_SETS[Math.floor(Math.random() * SIZE_EMOJI_SETS.length)];
+  const ta = document.getElementById('taskArea');
+  ta.innerHTML = '';
+
+  const pool = document.createElement('div');
+  pool.className = 'pool';
+  pool.id = 'sizePool';
+
+  const targetRow = document.createElement('div');
+  targetRow.className = 'target-row';
+  SIZES_CONFIG.forEach((sc, i) => {
+    const wrap = document.createElement('div'); wrap.className = 'slot-wrap';
+    const lbl  = document.createElement('div'); lbl.className = 'slot-label'; lbl.textContent = sc.label;
+    const slot = document.createElement('div'); slot.className = 'slot'; slot.id = 'sizeSlot' + i; slot.dataset.index = i;
+    wrap.appendChild(lbl); wrap.appendChild(slot);
+    targetRow.appendChild(wrap);
+  });
+
+  ta.appendChild(pool);
+  ta.appendChild(targetRow);
+
+  const alleSlotsBelegt = () => SIZES_CONFIG.every((_, i) => document.getElementById('sizeSlot' + i).querySelector('.size-item'));
+
+  const pruefeReihenfolge = () => {
+    let korrekt = true;
+    for (let i = 0; i < 3; i++) {
+      const slot = document.getElementById('sizeSlot' + i);
+      const el = slot.querySelector('.size-item');
+      if (!el || parseInt(el.dataset.sizeIndex) !== i) {
+        korrekt = false;
+        slot.classList.add('wrong-slot');
+        slot.classList.remove('correct-slot');
+      } else {
+        slot.classList.add('correct-slot');
+        slot.classList.remove('wrong-slot');
+      }
+    }
+    if (korrekt) {
+      document.getElementById('feedback').textContent = '⭐ Richtig sortiert! Super! ⭐';
+      spieleChime();
+      spreche('Richtig! Du hast perfekt sortiert! Super gemacht!');
+      document.getElementById('nextBtn').style.display = 'inline-block';
+      beantwortet = true;
+    } else {
+      document.getElementById('feedback').textContent = '❌ Nicht ganz – versuch es nochmal!';
+      spieleFehler();
+      setTimeout(() => spreche('Nicht ganz richtig. Versuch es nochmal!'), 100);
+      setTimeout(() => {
+        for (let i = 0; i < 3; i++) {
+          const slot = document.getElementById('sizeSlot' + i);
+          slot.classList.remove('wrong-slot', 'correct-slot');
+          const el = slot.querySelector('.size-item');
+          if (el) pool.appendChild(el);
+        }
+        document.getElementById('feedback').textContent = '';
+      }, 1400);
+    }
+  };
+
+  shuffle(SIZES_CONFIG).forEach(sc => {
+    const span = document.createElement('span');
+    span.className = 'size-item';
+    span.dataset.sizeIndex = sc.idx;
+    span.style.fontSize = sc.fs;
+    span.textContent = set.emoji;
+    makeDraggable(span, `<span style="font-size:${sc.fs};line-height:1">${set.emoji}</span>`, (el, target) => {
+      const slot = target?.closest('.slot');
+      if (slot && !slot.querySelector('.size-item')) {
+        slot.appendChild(el);
+      } else {
+        if (dragOriginNext) dragOriginParent.insertBefore(el, dragOriginNext);
+        else dragOriginParent.appendChild(el);
+      }
+      if (alleSlotsBelegt()) setTimeout(pruefeReihenfolge, 150);
+    });
+    pool.appendChild(span);
+  });
+
+  currentSpeechHint = `Ordne die Bilder vom Kleinsten zum Größten! Ziehe sie in die richtigen Felder!`;
+};
+
+// ═══════════════════════════════════════════════
+//  TASK: ODD ONE OUT
+// ═══════════════════════════════════════════════
+const renderOddOneOut = () => {
+  // Pick two different categories
+  const cats = shuffle(ODD_CATEGORIES).slice(0, 2);
+  const mainCat  = cats[0];
+  const oddCat   = cats[1];
+  const mainItems = pick(mainCat.items, 3);
+  const oddItem   = pick(oddCat.items, 1)[0];
+
+  // Build 4 items and remember which is the odd one
+  const items = shuffle([...mainItems, oddItem]);
+  const oddIdx = items.indexOf(oddItem);
+
+  const ta = document.getElementById('taskArea');
+  ta.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'odd-grid';
+
+  items.forEach((emoji, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'odd-btn';
+    btn.textContent = emoji;
+    btn.onclick = () => {
+      if (beantwortet) return;
+      getAudioCtx();
+      if (i === oddIdx) {
+        btn.classList.add('correct');
+        document.getElementById('feedback').textContent = '⭐ Richtig! Das passt nicht dazu! ⭐';
+        spieleChime();
+        spreche(`Richtig! ${emoji} gehört nicht zu den ${mainCat.name}. Toll!`);
+        document.getElementById('nextBtn').style.display = 'inline-block';
+        beantwortet = true;
+      } else {
+        btn.classList.add('wrong');
+        spieleFehler();
+        spreche('Das gehört dazu. Schau nochmal!');
+        setTimeout(() => btn.classList.remove('wrong'), 500);
+      }
+    };
+    grid.appendChild(btn);
+  });
+
+  ta.appendChild(grid);
+  currentSpeechHint = `Welches ${mainCat.name.replace(/n$/, '')} passt nicht zu den anderen? Tippe es an!`;
+  document.getElementById('instruction').textContent = `Welches passt nicht zu den anderen? Tippe es an! 🔍`;
+};
+
+// ═══════════════════════════════════════════════
+//  TASK: SEQUENCE
+// ═══════════════════════════════════════════════
+const PATTERN_TYPES = ['AB', 'ABC', 'AABB', 'ABB', 'AAB'];
+
+const renderSequence = () => {
+  const elems = shuffle(SEQ_ELEMENTS);
+  const type  = PATTERN_TYPES[Math.floor(Math.random() * PATTERN_TYPES.length)];
+  let seq, answer, wrongPool;
+
+  if (type === 'AB') {
+    const [a, b] = elems;
+    seq = [a, b, a, b, a];
+    answer = b;
+    wrongPool = elems.filter(e => e !== b);
+  } else if (type === 'ABC') {
+    const [a, b, c] = elems;
+    seq = [a, b, c, a, b];
+    answer = c;
+    wrongPool = elems.filter(e => e !== c);
+  } else if (type === 'AABB') {
+    const [a, b] = elems;
+    seq = [a, a, b, b, a];
+    answer = a;
+    wrongPool = elems.filter(e => e !== a);
+  } else if (type === 'ABB') {
+    const [a, b] = elems;
+    seq = [a, b, b, a, b];
+    answer = b;
+    wrongPool = elems.filter(e => e !== b);
+  } else { // AAB
+    const [a, b] = elems;
+    seq = [a, a, b, a, a];
+    answer = b;
+    wrongPool = elems.filter(e => e !== b);
+  }
+
+  const wrong = shuffle(wrongPool).slice(0, 2);
+  const options = shuffle([answer, ...wrong]);
+
+  const ta = document.getElementById('taskArea');
+  ta.innerHTML = '';
+
+  // Sequence display
+  const seqRow = document.createElement('div');
+  seqRow.className = 'sequence-row';
+  seq.forEach(e => {
+    const span = document.createElement('span');
+    span.className = 'seq-item';
+    span.textContent = e;
+    seqRow.appendChild(span);
+  });
+  const qMark = document.createElement('div');
+  qMark.className = 'seq-question';
+  qMark.textContent = '?';
+  seqRow.appendChild(qMark);
+  ta.appendChild(seqRow);
+
+  // Options
+  const optRow = document.createElement('div');
+  optRow.className = 'seq-options';
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'seq-btn';
+    btn.textContent = opt;
+    btn.onclick = () => {
+      if (beantwortet) return;
+      getAudioCtx();
+      if (opt === answer) {
+        btn.classList.add('correct');
+        qMark.textContent = answer;
+        qMark.style.background = '#c8e6c9';
+        document.getElementById('feedback').textContent = '⭐ Richtig! Super! ⭐';
+        spieleChime();
+        spreche('Richtig! Du hast das Muster erkannt! Super!');
+        document.getElementById('nextBtn').style.display = 'inline-block';
+        beantwortet = true;
+      } else {
+        btn.classList.add('wrong');
+        spieleFehler();
+        spreche('Das stimmt nicht. Schau genau auf das Muster!');
+        setTimeout(() => btn.classList.remove('wrong'), 500);
+      }
+    };
+    optRow.appendChild(btn);
+  });
+  ta.appendChild(optRow);
+
+  currentSpeechHint = 'Was kommt als nächstes? Schau auf das Muster und tippe die richtige Antwort!';
+};
+
+// ═══════════════════════════════════════════════
+//  TASK: WHICH IS BIGGER
+// ═══════════════════════════════════════════════
+const renderWhichBigger = () => {
+  const pair = COMPARE_PAIRS[Math.floor(Math.random() * COMPARE_PAIRS.length)];
+  // Randomly swap left/right
+  const swapped = Math.random() < 0.5;
+  const left  = swapped ? { emoji: pair.b, label: pair.bLabel, key: 'b' } : { emoji: pair.a, label: pair.aLabel, key: 'a' };
+  const right = swapped ? { emoji: pair.a, label: pair.aLabel, key: 'a' } : { emoji: pair.b, label: pair.bLabel, key: 'b' };
+
+  const ta = document.getElementById('taskArea');
+  ta.innerHTML = '';
+  const row = document.createElement('div');
+  row.className = 'compare-row';
+
+  [left, right].forEach(side => {
+    const btn = document.createElement('button');
+    btn.className = 'compare-btn';
+    btn.innerHTML = `${side.emoji}<span class="compare-label">${side.label}</span>`;
+    btn.onclick = () => {
+      if (beantwortet) return;
+      getAudioCtx();
+      if (side.key === pair.bigger) {
+        btn.classList.add('correct');
+        document.getElementById('feedback').textContent = '⭐ Richtig! ⭐';
+        spieleChime();
+        spreche(`Richtig! ${side.label} ${side.label === 'Erde' ? 'ist' : 'ist'} größer als ${side.key === 'a' ? pair.bLabel : pair.aLabel}.`);
+        document.getElementById('nextBtn').style.display = 'inline-block';
+        beantwortet = true;
+      } else {
+        btn.classList.add('wrong');
+        spieleFehler();
+        spreche(`Noch nicht ganz. Was ist wirklich größer?`);
+        setTimeout(() => btn.classList.remove('wrong'), 500);
+      }
+    };
+    row.appendChild(btn);
+  });
+
+  ta.appendChild(row);
+  currentSpeechHint = 'Was ist größer? Tippe das Richtige an!';
+};
+
+// ═══════════════════════════════════════════════
+//  NEUE RUNDE
+// ═══════════════════════════════════════════════
+const neueRunde = () => {
+  beantwortet = false;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('nextBtn').style.display = 'none';
+  dragClone = null; dragEl = null;
+
+  const mode = MODES[Math.floor(Math.random() * MODES.length)];
+  const [badgeText, badgeColor] = MODE_LABELS[mode];
+  const badge = document.getElementById('modeBadge');
+  badge.textContent = badgeText;
+  badge.style.background = badgeColor;
+
+  // Default instruction (may be overridden per mode)
+  const instr = document.getElementById('instruction');
+  switch(mode) {
+    case 'SHAPES':
+      instr.textContent = '🔷 Bringe jede Form zu ihrem Platz!';
+      renderShapes(); break;
+    case 'SIZES':
+      instr.textContent = '📏 Ordne vom Kleinsten zum Größten!';
+      renderSizes(); break;
+    case 'ODD_ONE_OUT':
+      renderOddOneOut(); break;   // sets instruction internally
+    case 'SEQUENCE':
+      instr.textContent = '🔮 Was kommt als nächstes?';
+      renderSequence(); break;
+    case 'WHICH_BIGGER':
+      instr.textContent = '📐 Was ist größer? Tippe es an!';
+      renderWhichBigger(); break;
+  }
+
+  spreche();
+};
+
+neueRunde();
+</script>

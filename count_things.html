@@ -1,0 +1,297 @@
+---
+layout: default
+---
+<style>
+  html, body {
+    position: static !important;
+    overflow: auto !important;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+  }
+
+  .icon-btn {
+    background: rgba(255,255,255,0.55);
+    border: none;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    font-size: 1.6rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .icon-btn:active { background: rgba(255,255,255,0.85); }
+
+  .game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 16px 30px;
+    gap: 24px;
+  }
+
+  .question-label {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #c2185b;
+    text-align: center;
+  }
+
+  .item-field {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    max-width: 480px;
+    padding: 20px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 24px;
+    min-height: 120px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .item {
+    font-size: 2.6rem;
+    line-height: 1;
+    animation: pop-in 0.3s ease backwards;
+  }
+
+  @keyframes pop-in {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  .answer-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .ans-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: none;
+    font-size: 2rem;
+    font-weight: 900;
+    cursor: pointer;
+    background: white;
+    color: #333;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    transition: transform 0.15s, background 0.15s;
+    touch-action: manipulation;
+  }
+  .ans-btn:active { transform: scale(0.9); }
+  .ans-btn.correct { background: #66bb6a; color: white; }
+  .ans-btn.wrong   { background: #ef9a9a; color: white; animation: shake 0.4s ease; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  .feedback {
+    font-size: 3rem;
+    text-align: center;
+    min-height: 60px;
+    animation: pop-in 0.3s ease;
+  }
+
+  .next-btn {
+    background: #e91e63;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 16px 40px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(233,30,99,0.4);
+    touch-action: manipulation;
+    display: none;
+  }
+  .next-btn:active { transform: scale(0.96); }
+
+  @media (min-width: 600px) {
+    .item { font-size: 3rem; }
+    .ans-btn { width: 96px; height: 96px; font-size: 2.4rem; }
+    .question-label { font-size: 1.8rem; }
+  }
+</style>
+
+<div class="topbar">
+  <a href="/mini_games/" class="icon-btn" title="Zurück">🏠</a>
+  <button class="icon-btn" onclick="spreche()" title="Vorlesen">🔊</button>
+</div>
+
+<div class="game-area">
+  <div class="question-label" id="questionLabel">Wie viele siehst du? 🤔</div>
+  <div class="item-field" id="itemField"></div>
+  <div class="answer-row" id="answerRow"></div>
+  <div class="feedback" id="feedback"></div>
+  <button class="next-btn" id="nextBtn" onclick="neueRunde()">Weiter ▶</button>
+</div>
+
+<script>
+  const ITEMS = [
+    { emoji: '🍎', name: 'Äpfel',          name1: 'Apfel' },
+    { emoji: '🍊', name: 'Orangen',         name1: 'Orange' },
+    { emoji: '🍋', name: 'Zitronen',        name1: 'Zitrone' },
+    { emoji: '🍇', name: 'Weintrauben',     name1: 'Weintraube' },
+    { emoji: '🍓', name: 'Erdbeeren',       name1: 'Erdbeere' },
+    { emoji: '🍌', name: 'Bananen',         name1: 'Banane' },
+    { emoji: '🍒', name: 'Kirschen',        name1: 'Kirsche' },
+    { emoji: '🍑', name: 'Pfirsiche',       name1: 'Pfirsich' },
+    { emoji: '🫐', name: 'Blaubeeren',      name1: 'Blaubeere' },
+    { emoji: '🍉', name: 'Wassermelonen',   name1: 'Wassermelone' },
+    { emoji: '🐱', name: 'Katzen',          name1: 'Katze' },
+    { emoji: '🐶', name: 'Hunde',           name1: 'Hund' },
+    { emoji: '🐰', name: 'Hasen',           name1: 'Hase' },
+    { emoji: '🐸', name: 'Frösche',         name1: 'Frosch' },
+    { emoji: '🐮', name: 'Kühe',            name1: 'Kuh' },
+    { emoji: '🐧', name: 'Pinguine',        name1: 'Pinguin' },
+    { emoji: '🦊', name: 'Füchse',          name1: 'Fuchs' },
+    { emoji: '🐻', name: 'Bären',           name1: 'Bär' },
+    { emoji: '🦋', name: 'Schmetterlinge',  name1: 'Schmetterling' },
+    { emoji: '🐝', name: 'Bienen',          name1: 'Biene' },
+    { emoji: '🌟', name: 'Sterne',          name1: 'Stern' },
+    { emoji: '🌸', name: 'Blüten',          name1: 'Blüte' },
+    { emoji: '🎈', name: 'Luftballons',     name1: 'Luftballon' },
+    { emoji: '⚽', name: 'Bälle',           name1: 'Ball' },
+  ];
+
+  let currentItem = null;
+  let richtigeAnzahl = 0;
+  let audioCtx = null;
+  let beantwortet = false;
+
+  const spreche = (text) => {
+    window.speechSynthesis.cancel();
+    const msg = new SpeechSynthesisUtterance(text || `Zähle die ${currentItem ? currentItem.name : 'Dinge'}. Wie viele siehst du?`);
+    msg.lang = 'de-DE';
+    msg.rate = 0.85;
+    window.speechSynthesis.speak(msg);
+  };
+
+  const getAudioCtx = () => {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  };
+
+  const spieleChime = () => {
+    const ctx = getAudioCtx();
+    [523, 659, 784, 1047].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      const t = ctx.currentTime + i * 0.18;
+      gain.gain.setValueAtTime(0.28, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+      osc.start(t);
+      osc.stop(t + 0.55);
+    });
+  };
+
+  const spieleFehler = () => {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 200;
+    osc.type = 'sawtooth';
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.45);
+  };
+
+  const neueRunde = () => {
+    beantwortet = false;
+    currentItem = ITEMS[Math.floor(Math.random() * ITEMS.length)];
+    richtigeAnzahl = Math.floor(Math.random() * 10) + 1;
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('questionLabel').textContent = `Wie viele ${currentItem.name} siehst du? 🤔`;
+
+    // Items anzeigen
+    const field = document.getElementById('itemField');
+    field.innerHTML = '';
+    for (let i = 0; i < richtigeAnzahl; i++) {
+      const a = document.createElement('span');
+      a.className = 'item';
+      a.textContent = currentItem.emoji;
+      a.style.animationDelay = `${i * 0.06}s`;
+      field.appendChild(a);
+    }
+
+    // Antwort-Buttons generieren
+    const zahlen = new Set([richtigeAnzahl]);
+    while (zahlen.size < 5) {
+      let n = richtigeAnzahl + Math.floor(Math.random() * 7) - 3;
+      if (n >= 1 && n <= 13) zahlen.add(n);
+    }
+    const shuffled = [...zahlen].sort(() => Math.random() - 0.5);
+    const row = document.getElementById('answerRow');
+    row.innerHTML = '';
+    shuffled.forEach(z => {
+      const btn = document.createElement('button');
+      btn.className = 'ans-btn';
+      btn.textContent = z;
+      btn.onclick = () => pruefeAntwort(z, btn);
+      row.appendChild(btn);
+    });
+
+    spreche();
+  };
+
+  const pruefeAntwort = (zahl, btn) => {
+    if (beantwortet) return;
+    beantwortet = true;
+    getAudioCtx();
+
+    if (zahl === richtigeAnzahl) {
+      btn.classList.add('correct');
+      const singularOrPlural = richtigeAnzahl === 1 ? currentItem.name1 : currentItem.name;
+      document.getElementById('feedback').textContent = '⭐ Richtig! Sehr gut! ⭐';
+      spieleChime();
+      setTimeout(() => spreche(`Richtig! ${richtigeAnzahl === 1 ? 'Es ist' : 'Es sind'} ${richtigeAnzahl} ${singularOrPlural}. Super gemacht!`), 200);
+      document.getElementById('nextBtn').style.display = 'inline-block';
+    } else {
+      btn.classList.add('wrong');
+      document.getElementById('feedback').textContent = '❌ Versuch es nochmal!';
+      spieleFehler();
+      setTimeout(() => spreche('Versuch es nochmal!'), 200);
+      setTimeout(() => {
+        btn.classList.remove('wrong');
+        beantwortet = false;
+      }, 800);
+    }
+  };
+
+  neueRunde();
+</script>
